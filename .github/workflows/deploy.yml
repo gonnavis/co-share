@@ -1,8 +1,8 @@
 name: Depolyment
 
 on:
-  push:
-    branches: [ master ]
+    push:
+        branches: [master]
 
 jobs:
     depoly:
@@ -25,14 +25,20 @@ jobs:
             - name: Build
               run: npm run build
 
-            - name: copy file
+            - name: copy package.json
               uses: canastro/copy-file-action@master
               with:
-                source: "package.json"
-                target: "dist/package.json"
+                  source: "package.json"
+                  target: "dist/package.json"
+
+            - name: copy README.md
+              uses: canastro/copy-file-action@master
+              with:
+                  source: "README.md"
+                  target: "dist/README.md"
 
             - name: Deploy
-              run: npm publish
-              working-directory: ./dist
-              env:
-                NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+              uses: JS-DevTools/npm-publish@v1
+              with:
+                  package_path: "./dist"
+                  token: ${{ secrets.NPM_TOKEN }}
