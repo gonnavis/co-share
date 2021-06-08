@@ -86,39 +86,8 @@ rootStore.addChildStore(new CounterStore(0), false, "counter")
 ## Architecture
 
 **Example**
-```graphviz
-graph Website {
-    node [fontname=Arial]
-    edge [fontname=Arial]
-    rankdir="LR"
-    bgcolor=transparent
 
-    subgraph cluster_server {
-        label = "Server";
-        fontname="Arial";
-        server_store_1 [label="Store 1"]
-        server_store_2 [label="Store 2"]
-    }
-
-    subgraph cluster_client_1 {
-        label = "Client 1";
-        fontname="Arial";
-        client_1_store_1 [label="Store 1"]
-        client_1_store_2 [label="Store 2"]
-    }
-    subgraph cluster_client_2 {
-        label = "Client 2";
-        fontname="Arial";
-        client_2_store_1 [label="Store 1"]
-    }
-
-    server_store_1 -- client_1_store_1 [label="Store Link 1"]
-    server_store_2 -- client_1_store_2 [label="Store Link 2"]
-
-    server_store_1 -- client_2_store_1 [label="Store Link 3"]
-
-}
-```
+![Sample Architecture Graph](graph.svg)
 
 **In depth description:**
 

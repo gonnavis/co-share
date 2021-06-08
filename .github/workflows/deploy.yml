@@ -5,7 +5,9 @@ on:
         branches: [master]
 
 jobs:
-    depoly:
+    deploy:
+        env:
+            NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -38,7 +40,5 @@ jobs:
                   target: "dist/README.md"
 
             - name: Deploy
-              uses: JS-DevTools/npm-publish@v1
-              with:
-                  package_path: "./dist"
-                  token: ${{ secrets.NPM_TOKEN }}
+              run: npm publish
+              working-directory: ./dist
