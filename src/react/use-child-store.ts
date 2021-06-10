@@ -3,6 +3,7 @@ import { retryWhen, tap, delay } from "rxjs/operators"
 import { Store, StoreLink, PathEntry } from ".."
 
 const storeDataSet = new Set<{
+    referenceCount: number
     parentStore: Store
     path: [PathEntry, ...Array<PathEntry>]
     store: Store
@@ -26,17 +27,21 @@ export function useChildStore<S extends Store>(
         throw parentStore
             .subscribeToChild(childConstr, storeLink, ...path)
             .pipe(
-                tap(([store, hostLink]) => storeDataSet.add({ parentStore, path, hostLink, store })),
+                tap(([store, hostLink]) => storeDataSet.add({ referenceCount: 0, parentStore, path, hostLink, store })),
                 retryWhen((error) => error.pipe(delay(retryAfter)))
             )
             .toPromise()
     }
 
     useEffect(() => {
+        storeData.referenceCount += 1
         return () => {
-            storeData.store.unsubscribe.publishTo({ to: "one", one: storeData.hostLink })
-            storeData.hostLink.close()
-            storeDataSet.delete(storeData)
+            storeData.referenceCount -= 1
+            if (storeData.referenceCount === 0) {
+                storeData.store.unsubscribe.publishTo({ to: "one", one: storeData.hostLink })
+                storeData.hostLink.close()
+                storeDataSet.delete(storeData)
+            }
         }
     }, [storeData])
     return storeData.store as S

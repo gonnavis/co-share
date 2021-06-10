@@ -8,6 +8,8 @@ import { Subscriber } from "./subscriber"
 export type PathEntry = string | number
 
 export abstract class Store {
+    public parentStore: Store | undefined
+
     public get links(): ReadonlyArray<StoreLink> {
         return Array.from(this.linkSet.values())
     }
@@ -26,7 +28,7 @@ export abstract class Store {
 
     public log = Action.create(this, "log", (origin, log: any) => console.log(origin, log))
 
-    public addChildStore<S extends Store>(
+    public addChildStore(
         store: Store,
         overwrite: boolean,
         ...[firstPathEntry, ...rest]: [PathEntry, ...Array<PathEntry>]
@@ -39,6 +41,7 @@ export abstract class Store {
             childStore.addChildStore(store, overwrite, ...(rest as [PathEntry, ...Array<PathEntry>]))
         } else {
             if (overwrite || !this.childStoreMap.has(firstPathEntry)) {
+                store.parentStore = this
                 this.childStoreMap.set(firstPathEntry, store)
             } else {
                 throw `Store "${firstPathEntry}" already exists on store (${store}). If you want to overwrite the store, set the overwrite parameter to true.`
@@ -52,6 +55,7 @@ export abstract class Store {
             if (childStore == null) {
                 throw `unable to find child in store at path entry "${firstPathEntry}"`
             }
+            childStore.parentStore = undefined
             childStore.removeChildStore(...(rest as [PathEntry, ...Array<PathEntry>]))
         } else {
             this.childStoreMap.delete(firstPathEntry)
@@ -73,42 +77,44 @@ export abstract class Store {
         )
     }
 
-    private requestSubscribeToChild: Request<[id: StoreLinkId, ...path: [PathEntry, ...Array<PathEntry>]], Array<any>> =
-        Request.create(
-            this,
-            "requestSubscribeToChild",
-            (origin: StoreLink | undefined, id: StoreLinkId, ...path: [PathEntry, ...Array<PathEntry>]) => {
-                if (origin == null) {
-                    throw `subscribeToChild can only be executed remotely using "publish"`
-                }
-                const [firstPathEntry, ...restPath] = path
-                const childStore = this.childStoreMap.get(firstPathEntry)
-                if (childStore == null) {
-                    return throwError(`unable to find child in store at path entry "${firstPathEntry}"`)
-                }
-                if (restPath.length === 0) {
-                    if (childStore instanceof childStore.subscriber.storeClass) {
-                        return new Observable<Array<any>>((subscriber) =>
-                            childStore.subscriber(
-                                origin.connection,
-                                (...params) => subscriber.next(params),
-                                (reason) => subscriber.error(reason)
-                            )
-                        ).pipe(tap(() => childStore.link(id, origin.connection)))
-                    } else {
-                        return throwError(
-                            "Subscribed store has no correct implemented subscriber. Subscriber must be created with the store class."
+    private requestSubscribeToChild: Request<
+        [id: StoreLinkId, ...path: [PathEntry, ...Array<PathEntry>]],
+        Array<any>
+    > = Request.create(
+        this,
+        "requestSubscribeToChild",
+        (origin: StoreLink | undefined, id: StoreLinkId, ...path: [PathEntry, ...Array<PathEntry>]) => {
+            if (origin == null) {
+                throw `subscribeToChild can only be executed remotely using "publish"`
+            }
+            const [firstPathEntry, ...restPath] = path
+            const childStore = this.childStoreMap.get(firstPathEntry)
+            if (childStore == null) {
+                return throwError(`unable to find child in store at path entry "${firstPathEntry}"`)
+            }
+            if (restPath.length === 0) {
+                if (childStore instanceof childStore.subscriber.storeClass) {
+                    return new Observable<Array<any>>((subscriber) =>
+                        childStore.subscriber(
+                            origin.connection,
+                            (...params) => subscriber.next(params),
+                            (reason) => subscriber.error(reason)
                         )
-                    }
+                    ).pipe(tap(() => childStore.link(id, origin.connection)))
                 } else {
-                    return childStore.requestSubscribeToChild.forwardFrom(
-                        origin,
-                        id,
-                        ...(restPath as [PathEntry, ...Array<PathEntry>])
+                    return throwError(
+                        "Subscribed store has no correct implemented subscriber. Subscriber must be created with the store class."
                     )
                 }
+            } else {
+                return childStore.requestSubscribeToChild.forwardFrom(
+                    origin,
+                    id,
+                    ...(restPath as [PathEntry, ...Array<PathEntry>])
+                )
             }
-        )
+        }
+    )
 
     unsubscribe = Action.create(this, "unsubscribe", (origin) => {
         if (origin == null) {
