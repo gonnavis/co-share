@@ -2,19 +2,20 @@
  --><!-- Title: Website Pages: 1 --><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="319pt" height="240pt" viewBox="0.00 0.00 319.34 240.00">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 236)">
 <title>Website</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-236 315.3436,-236 315.3436,4 -4,4"/>
 <g id="clust1" class="cluster">
 <title>cluster_server</title>
-<polygon fill="transparent" stroke="#000000" points="8,-93 8,-224 108.3275,-224 108.3275,-93 8,-93"/>
+<polygon fill="#ffffff" stroke="#000000" points="8,-93 8,-224 108.3275,-224 108.3275,-93 8,-93"/>
 <text text-anchor="middle" x="58.1637" y="-207.4" font-family="Arial" font-size="14.00" fill="#000000">Server</text>
 </g>
 <g id="clust2" class="cluster">
 <title>cluster_client_1</title>
-<polygon fill="transparent" stroke="#000000" points="203.0161,-93 203.0161,-224 303.3436,-224 303.3436,-93 203.0161,-93"/>
+<polygon fill="#ffffff" stroke="#000000" points="203.0161,-93 203.0161,-224 303.3436,-224 303.3436,-93 203.0161,-93"/>
 <text text-anchor="middle" x="253.1798" y="-207.4" font-family="Arial" font-size="14.00" fill="#000000">Client 1</text>
 </g>
 <g id="clust3" class="cluster">
 <title>cluster_client_2</title>
-<polygon fill="transparent" stroke="#000000" points="203.0161,-8 203.0161,-85 303.3436,-85 303.3436,-8 203.0161,-8"/>
+<polygon fill="#ffffff" stroke="#000000" points="203.0161,-8 203.0161,-85 303.3436,-85 303.3436,-8 203.0161,-8"/>
 <text text-anchor="middle" x="253.1798" y="-68.4" font-family="Arial" font-size="14.00" fill="#000000">Client 2</text>
 </g>
 <!-- server_store_1 -->

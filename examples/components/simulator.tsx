@@ -1,0 +1,78 @@
+import { Suspense, useEffect, useMemo, useState } from "react"
+import { Connection, RootStoreDefaultLinkId } from "co-share"
+import { ServerStub } from "../server-stub"
+import { RootStore } from "../stores/root-store"
+
+export function Simulator({
+    children,
+    initStore,
+    log,
+    twoClients,
+}: {
+    log?: boolean
+    initStore: (rootStore: RootStore) => void
+    children: (rootStore: RootStore) => JSX.Element
+    twoClients?: boolean
+}) {
+    const [connections, setConnections] = useState<Array<Connection> | undefined>(undefined)
+
+    useEffect(() => {
+        const rootStore = new RootStore()
+        initStore(rootStore)
+        const serverStub = new ServerStub(rootStore, log ?? false)
+        Promise.all(new Array(twoClients ? 2 : 1).fill(null).map(() => serverStub.createConnection())).then(
+            setConnections
+        )
+    }, [log, setConnections, initStore, twoClients])
+
+    if (connections == null) {
+        return null
+    }
+
+    return (
+        <>
+            {connections.map((connection) => (
+                <div
+                    style={{
+                        flexGrow: 1,
+                        flexBasis: 0,
+                        flexShrink: 1,
+                        margin: 10,
+                        display: "flex",
+                        flexDirection: "column",
+                    }}>
+                    <h6>Client {connection.userData.id}</h6>
+                    <div
+                        style={{ marginTop: 10, borderRadius: 10, border: "1px solid #000" }}
+                        key={connection.userData.id}
+                        className="flex-grow-1 flex-basis-0">
+                        <View connection={connection} children={children} />
+                    </div>
+                </div>
+            ))}
+        </>
+    )
+}
+
+export function View({
+    children,
+    connection,
+}: {
+    connection: Connection
+    children: (rootStore: RootStore) => JSX.Element
+}) {
+    const rootStore = useMemo(() => {
+        if (connection == null) {
+            return undefined
+        }
+        const store = new RootStore()
+        store.link(RootStoreDefaultLinkId, connection)
+        return store
+    }, [connection])
+
+    if (rootStore == null) {
+        return <span>Connecting to root store ...</span>
+    }
+
+    return <Suspense fallback={"loading ..."}>{children(rootStore)}</Suspense>
+}
