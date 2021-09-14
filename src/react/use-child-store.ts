@@ -5,7 +5,7 @@ import { Store, StoreLink, PathEntry } from ".."
 const storeDataSet = new Set<{
     referenceCount: number
     parentStore: Store
-    path: [PathEntry, ...Array<PathEntry>]
+    path: PathEntry
     store: Store
     hostLink: StoreLink
 }>()
@@ -15,17 +15,16 @@ export function useChildStore<S extends Store>(
     storeLink: StoreLink,
     childConstr: new (...params: Array<any>) => S,
     retryAfter: number,
-    ...path: [PathEntry, ...Array<PathEntry>]
+    path: PathEntry
 ): S {
     const storeData = useMemo(
-        () =>
-            Array.from(storeDataSet).find((s) => s.parentStore === parentStore && s.path.join("/") === path.join("/")),
+        () => Array.from(storeDataSet).find((s) => s.parentStore === parentStore && s.path === path),
         []
     )
 
     if (storeData == null) {
         throw parentStore
-            .subscribeToChild(childConstr, storeLink, ...path)
+            .subscribeToChild(childConstr, storeLink, path)
             .pipe(
                 tap(([store, hostLink]) => storeDataSet.add({ referenceCount: 0, parentStore, path, hostLink, store })),
                 retryWhen((error) => error.pipe(delay(retryAfter)))
