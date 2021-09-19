@@ -39,56 +39,51 @@ export function MessagesSamplePage({ rootStore }: { rootStore: Store }) {
     const clients = useStoreState((store) => store.clients)
 
     return (
-        <div>
+        <div className="p-3">
             <h5>Clients</h5>
             {clients.map((client) => (
-                <Client sendMessage={store.sendMessage.bind(store, id)} client={client} key={client.id} />
+                <Client sendMessage={store.sendMessage.bind(store, id)} client={client} key={client} />
             ))}
-            <h5>Messages</h5>
+            <h5 className="mt-3">Messages</h5>
             <div>
                 {messages.map(({ message, senderId }, index) => (
-                    <Message key={index} clients={clients} senderId={senderId} message={message} />
+                    <div key={index}>
+                        From {senderId}: <span className="h6">{message}</span>
+                    </div>
                 ))}
             </div>
         </div>
     )
 }
 
-export function Client({ sendMessage }: { sendMessage: (receiverId: string, message: string) => void }) {
+export function Client({ sendMessage, client }: { client: string, sendMessage: (receiverId: string, message: string) => void }) {
     const inputRef = useRef<HTMLInputElement>(null)
     return (
         <div>
-            <span>{client.username}</span>
-            <input ref={inputRef}></input>
-            <button
-                onClick={() => {
-                    if (inputRef.current != null) {
-                        sendMessage(client.id, inputRef.current.value)
-                        inputRef.current.value = ""
-                    }
-                }}>
-                send
-            </button>
-        </div>
-    )
-}
+            <span>{client}</span>
 
-export function Message({
-    message,
-    senderId,
-    clients,
-}: {
-    message: string
-    senderId: string
-    clients: Array<ClientInfo>
-}) {
-    const senderName = useMemo(
-        () => clients.find(({ id }) => id === senderId)?.username ?? "unkown",
-        [senderId, clients]
-    )
-    return (
-        <div>
-            {senderName}: {message}
+            <div className="input-group mb-3">
+                <input
+                    ref={inputRef}
+                    style={{ flexGrow: 1 }}
+                    type="text"
+                    className="form-control"
+                    placeholder="Message"
+                />
+                <div className="input-group-append">
+                    <button
+                        className="btn btn-outline-primary"
+                        onClick={() => {
+                            if (inputRef.current != null) {
+                                sendMessage(client, inputRef.current.value)
+                                inputRef.current.value = ""
+                            }
+                        }}
+                        type="button">
+                        Create
+                    </button>
+                </div>
+            </div>
         </div>
     )
 }

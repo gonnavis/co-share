@@ -11,6 +11,9 @@ const withMDX = require("@next/mdx")({
 
 module.exports = withMDX(
     withPurgeCss({
+        eslint: {
+          ignoreDuringBuilds: true,
+        },
         pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
         trailingSlash: true,
         purgeCssPaths: ["pages/**/*", "components/**/*"],

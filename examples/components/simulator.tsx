@@ -31,21 +31,14 @@ export function Simulator({
 
     return (
         <>
-            {connections.map((connection) => (
+            {connections.map((connection, index) => (
                 <div
-                    style={{
-                        flexGrow: 1,
-                        flexBasis: 0,
-                        flexShrink: 1,
-                        margin: 10,
-                        display: "flex",
-                        flexDirection: "column",
-                    }}>
+                    className="d-flex flex-column flex-grow-1 flex-basis-0 m-3 flex-shrink-1"
+                    key={connection.userData.id}>
                     <h6>Client {connection.userData.id}</h6>
                     <div
-                        style={{ marginTop: 10, borderRadius: 10, border: "1px solid #000" }}
                         key={connection.userData.id}
-                        className="flex-grow-1 flex-basis-0">
+                        className="flex-grow-1 flex-basis-0 border border-2 rounded-3">
                         <View connection={connection} children={children} />
                     </div>
                 </div>

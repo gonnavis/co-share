@@ -7,9 +7,7 @@ export class MessagesStore extends Store {
     public state: StoreApi<{ clients: Array<string>; messages: Array<{ senderId: string; message: string }> }>
 
     public subscriber: Subscriber = Subscriber.create(MessagesStore, (connection, accept, deny) => {
-        this.addClient({
-            ...connection.userData,
-        })
+        this.addClient(connection.userData.id)
         accept(this.state.getState().clients.filter((id) => id != connection.userData.id))
     })
 
@@ -17,18 +15,19 @@ export class MessagesStore extends Store {
         this,
         "send-message",
         (origin, senderId: string, receiverId: string, message: string) => {
+            //the following routing algorithm assumes a star topology
             if (origin == null) {
                 this.sendMessage.publishTo({ to: "one", one: this.links[0] }, senderId, receiverId, message)
-            } else  {
-                this.state.setState({
-                    messages: [...this.state.getState().messages, { message, senderId }],
-                })
-            } else {
+            } else if (origin.connection.userData.id === senderId) {
                 const link = this.links.find((link) => link.connection.userData.id === receiverId)
                 if (link == null) {
                     throw `unable to find connection with receiver id ${receiverId}`
                 }
                 this.sendMessage.publishTo({ to: "one", one: link }, senderId, receiverId, message)
+            } else {
+                this.state.setState({
+                    messages: [...this.state.getState().messages, { message, senderId }],
+                })
             }
         }
     )
@@ -40,7 +39,7 @@ export class MessagesStore extends Store {
         )
     }
 
-    public onLink(link: StoreLink): void {}
+    public onLink(link: StoreLink): void { }
 
     private addClient = Action.create(this, "addClient", (origin, clientInfo: string) => {
         this.state.setState({
@@ -51,7 +50,7 @@ export class MessagesStore extends Store {
 
     private removeClient = Action.create(this, "removeClient", (origin, clientId: string) => {
         this.state.setState({
-            clients: this.state.getState().clients.filter(({ id }) => id !== clientId),
+            clients: this.state.getState().clients.filter((id) => id !== clientId),
         })
         this.removeClient.publishTo(origin == null ? { to: "all" } : { to: "all-except-one", except: origin }, clientId)
     })
@@ -73,56 +72,53 @@ export function MessagesSamplePage({ rootStore }: { rootStore: Store }) {
     const clients = useStoreState((store) => store.clients)
 
     return (
-        <div>
+        <div className="p-3">
             <h5>Clients</h5>
             {clients.map((client) => (
-                <Client sendMessage={store.sendMessage.bind(store, id)} client={client} key={client.id} />
+                <Client sendMessage={store.sendMessage.bind(store, id)} client={client} key={client} />
             ))}
-            <h5>Messages</h5>
+            <h5 className="mt-3">Messages</h5>
             <div>
                 {messages.map(({ message, senderId }, index) => (
-                    <Message key={index} clients={clients} senderId={senderId} message={message} />
+                    <div key={index}>
+                        From {senderId}: <span className="h6">{message}</span>
+                    </div>
                 ))}
             </div>
         </div>
     )
 }
+```
 
-export function Client({ sendMessage }: { sendMessage: (receiverId: string, message: string) => void }) {
+```typescript
+export function Client({ sendMessage, client }: { client: string, sendMessage: (receiverId: string, message: string) => void }) {
     const inputRef = useRef<HTMLInputElement>(null)
     return (
         <div>
-            <span>{client.username}</span>
-            <input ref={inputRef}></input>
-            <button
-                onClick={() => {
-                    if (inputRef.current != null) {
-                        sendMessage(client.id, inputRef.current.value)
-                        inputRef.current.value = ""
-                    }
-                }}>
-                send
-            </button>
-        </div>
-    )
-}
+            <span>{client}</span>
 
-export function Message({
-    message,
-    senderId,
-    clients,
-}: {
-    message: string
-    senderId: string
-    clients: Array<ClientInfo>
-}) {
-    const senderName = useMemo(
-        () => clients.find(({ id }) => id === senderId)?.username ?? "unkown",
-        [senderId, clients]
-    )
-    return (
-        <div>
-            {senderName}: {message}
+            <div className="input-group mb-3">
+                <input
+                    ref={inputRef}
+                    style={{ flexGrow: 1 }}
+                    type="text"
+                    className="form-control"
+                    placeholder="Message"
+                />
+                <div className="input-group-append">
+                    <button
+                        className="btn btn-outline-primary"
+                        onClick={() => {
+                            if (inputRef.current != null) {
+                                sendMessage(client, inputRef.current.value)
+                                inputRef.current.value = ""
+                            }
+                        }}
+                        type="button">
+                        Create
+                    </button>
+                </div>
+            </div>
         </div>
     )
 }

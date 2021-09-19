@@ -47,7 +47,7 @@ export function RequestExamplePage({ rootStore }: { rootStore: Store }) {
 
     return (
         <>
-            <div className="p-3 input-group mb-3">
+            <div className="p-3 input-group">
                 <input
                     type="number"
                     ref={v1Ref}

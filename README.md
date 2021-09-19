@@ -1,95 +1,55 @@
-# co-share (Coconut **SHA**red sto**RE**)
+# co-share
 
-**Architecting shared applications using js & node.js.**
+Architecting shared applications using js & node.js.
 
-## Motivation
+`npm i co-share`
 
-Building **multiuser applications for the web** can become challenging as asynchronous communication can drastically increase the system complexity.
+## **Why?**
+
+Building **multiuser applications for the web** is often challenging as asynchronous communication can drastically increase the system complexity.
 Writing **robust and performant shared applications** requires a structured and fitting architecure.
 
-We propose the abstraction of **shared stores** to contain shared logic and data between any participating system.
-By using js & node.js the same store can be used on the client and on the server to carry out the **platform indepedent communication**.
+We propose the abstraction of **shared stores** to distribute logic and data between participating system.
+By using js & node.js the same code can be used on the client and on the server to carry out the **platform indepedent communication**.
 
-## How to use / Example Use-Case
+## **How to use**
 
-**using SocketIO (co-share-socketio) for network communication & zustand for state storing**
-
-_only an overview | full source code under: TBD_
-
-**Shared**
+The library is framework independent as it runs on the `Web` and `NodeJS`. However, we provide `react` hooks out of the box to simplify the experience. *Please help us to build tools for more web frameworks.*
 
 ```typescript
-export class CounterStore extends Store {
-    public subscriber: Subscriber = Subscriber.create(CounterStore, (connection, accept, deny) =>
-        //accepting all incomming connections and providing the current state as initial parameters
-        accept(this.state.getState().counter)
-    )
-
-    public state: StoreApi<{ counter: number }>
-
-    public onUnlink(link: StoreLink): void {}
-
-    public onLink(link: StoreLink): void {}
-
-    constructor(value: number) {
-        super()
-        //initializing the state with the retrieved value
-        this.state = create(() => ({ counter: value }))
-    }
-
-    //increases the local counter value and publishes the Action invocation to all other participants
-    increase = Action.create(this, "incr", (origin) => {
-        //publishing to all other subscribed clients
-        this.increase.publishTo(origin == null ? { to: "all" } : { to: "all-except-one", except: origin })
-        //updating own state
-        this.state.setState({
-            counter: this.state.getState().counter + 1,
-        })
+new Example extends Store {
+    action = Action.create(this, "actionName", (origin, parameter) => {
+        action.publishTo(
+            origin == null ?
+                { to: "all" } :
+                { to: "all-except-one", except: origin },
+            parameter
+        )
     })
 }
 ```
 
-**React-client**
+The `Stores` contain the platform **platform indepedent logic** and **data**. `Stores` can contain `Action`s, which can remote method invocation. Above we use `publishTo` to make the targetted store execute the action with the provided `parameter`.
 
-```typescript
-function Counter({ parentStore, name }: { parentStore: Store }) {
-    //implict subscription to the "counter" store as a child of the parent store
-    const store = useChildStore(parentStore, parentStore.links[0], CounterStore, 1000, "counter")
-    //getting the state hook from zustand
-    const useStoreState = useMemo(() => create(store.state), [store])
 
-    //reading the current counter value
-    const { counter } = useStoreState()
+## [**Examples**](https://co-share.github.io)
 
-    return (
-        <div>
-            <button
-                onClick={() => {
-                    //triggering the store's "increase" action
-                    store.increase()
-                }}>
-                increase
-            </button>
-            <span>{counter}</span>
-        </div>
-    )
-}
-```
+* [Counter](https://co-share.github.io/counter) - a global synchronized counter that can be increased asynchronously by every client
+* [Request](https://co-share.github.io/requst) - request response paradigma
+* [Group Chat](https://co-share.github.io/group-chat) - a whatsapp like chat implementation
+* [Message](https://co-share.github.io/message) - direct client to client messaging without any persistent storage in between
+* [Lockable](https://co-share.github.io/lockable) - advanced lock functionality to prevent editing by multiple people simultaneously 
+* [Optimistic Lockable](https://co-share.github.io/optimistic-lockable) - performance optimize lockable that allows for optimistic behaviour and error correction
+* [Whiteboard](https://co-share.github.io/whiteboard) - collaborative drawing on a shared whiteboard
+* [Transformable](https://co-share.github.io/transformable) - shared 3D transformation
 
-**Server**
-
-```typescript
-//providing the counter store under "counter" with an initial value of 0
-rootStore.addChildStore(new CounterStore(0), false, "counter")
-```
-
-## Architecture
-
-**Example**
+## Example Architecture
 
 ![Sample Architecture Graph](graph.svg)
 
-**In depth description:**
+In a multiuser scenario stores are connected using `StoreLink`s. One Store can have 0-N `StoreLink`s to other participants.
+
+## **In depth description**
 
 This framework revolves arround the idea of **Stores**, which can represent any entity or information. **Stores** are classes which can contain **Actions**. **Actions** are methods that can be executed remotely. The communication to enable this execution is carried out by the specific connection, e.g. using socketio.
 
