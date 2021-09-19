@@ -12,6 +12,7 @@ const withMDX = require("@next/mdx")({
 module.exports = withMDX(
     withPurgeCss({
         basePath: '/co-share',
+        assetPrefix: '/co-share',
         eslint: {
           ignoreDuringBuilds: true,
         },
