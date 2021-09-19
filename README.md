@@ -32,16 +32,16 @@ new Example extends Store {
 The `Stores` contain the platform **platform indepedent logic** and **data**. `Stores` can contain `Action`s, which can remote method invocation. Above we use `publishTo` to make the targetted store execute the action with the provided `parameter`.
 
 
-## [**Examples**](https://co-share.github.io)
+## [**Examples**](https://cocoss-org.github.io/co-share)
 
-* [Counter](https://co-share.github.io/counter) - a global synchronized counter that can be increased asynchronously by every client
-* [Request](https://co-share.github.io/requst) - request response paradigma
-* [Group Chat](https://co-share.github.io/group-chat) - a whatsapp like chat implementation
-* [Message](https://co-share.github.io/message) - direct client to client messaging without any persistent storage in between
-* [Lockable](https://co-share.github.io/lockable) - advanced lock functionality to prevent editing by multiple people simultaneously 
-* [Optimistic Lockable](https://co-share.github.io/optimistic-lockable) - performance optimize lockable that allows for optimistic behaviour and error correction
-* [Whiteboard](https://co-share.github.io/whiteboard) - collaborative drawing on a shared whiteboard
-* [Transformable](https://co-share.github.io/transformable) - shared 3D transformation
+* [Counter](https://cocoss-org.github.io/co-share/counter) - a global synchronized counter that can be increased asynchronously by every client
+* [Request](https://cocoss-org.github.io/co-share/requst) - request response paradigma
+* [Group Chat](https://cocoss-org.github.io/co-share/group-chat) - a whatsapp like chat implementation
+* [Message](https://cocoss-org.github.io/co-share/message) - direct client to client messaging without any persistent storage in between
+* [Lockable](https://cocoss-org.github.io/co-share/lockable) - advanced lock functionality to prevent editing by multiple people simultaneously 
+* [Optimistic Lockable](https://cocoss-org.github.io/co-share/optimistic-lockable) - performance optimize lockable that allows for optimistic behaviour and error correction
+* [Whiteboard](https://cocoss-org.github.io/co-share/whiteboard) - collaborative drawing on a shared whiteboard
+* [Transformable](https://cocoss-org.github.io/co-share/transformable) - shared 3D transformation
 
 ## Example Architecture
 
