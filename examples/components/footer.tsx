@@ -1,3 +1,7 @@
+import Image, { ImageLoader } from 'next/image'
+
+const loader: ImageLoader = ({ src,  }) => `/co-share${src}`
+
 export function Footer() {
     return (
         <>
@@ -20,7 +24,7 @@ export function Footer() {
                         <span className="h5 mb-0">Github</span>
                     </a>
                     <a target="_blank" href="https://www.coconut-xr.com/">
-                        <img height={50} src="/powered-by.svg" />
+                        <Image loader={loader} width={212.5} height={50} src={"/powered-by.svg"} />
                     </a>
                 </div>
             </footer>
