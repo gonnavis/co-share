@@ -25,7 +25,7 @@ module.exports = withImages(
       trailingSlash: true,
       purgeCssPaths: ["pages/**/*", "components/**/*"],
       purgeCss: {
-        whitelistPatterns: () => [/^.token$/, /^code$/, /^html$/, /^body$/],
+        whitelistPatterns: () => [/^.token/, /^code/, /^html$/, /^body$/],
       },
     })
   )
