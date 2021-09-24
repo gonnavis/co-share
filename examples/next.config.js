@@ -13,6 +13,9 @@ const withMDX = require("@next/mdx")({
 module.exports = withImages(
   withMDX(
     withPurgeCss({
+      images: {
+        loader: 'custom'
+      },
       basePath: '/co-share',
       assetPrefix: '/co-share',
       eslint: {
@@ -22,7 +25,7 @@ module.exports = withImages(
       trailingSlash: true,
       purgeCssPaths: ["pages/**/*", "components/**/*"],
       purgeCss: {
-        whitelistPatterns: () => [/^html$/, /^body$/],
+        whitelistPatterns: () => [/^code$/, /^html$/, /^body$/],
       },
     })
   )
