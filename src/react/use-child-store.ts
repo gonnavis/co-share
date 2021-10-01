@@ -37,14 +37,17 @@ export function useChildStore<S extends Store>(
 
     if (storeData == null) {
         const loadingEntry: StoreDataSetLoadingEntry = {
-            parentStore, 
+            parentStore,
             path,
             type: "loading",
-            observable: null as any
+            observable: null as any,
         }
         const observable: ConnectableObservable<[Store, StoreLink]> = parentStore
-            .subscribeToChild(childConstr, storeLink, path).pipe(
-                tap(([store, hostLink]) => storeDataSet.add({ type: "loaded", referenceCount: 0, parentStore, path, hostLink, store })),
+            .subscribeToChild(childConstr, storeLink, path)
+            .pipe(
+                tap(([store, hostLink]) =>
+                    storeDataSet.add({ type: "loaded", referenceCount: 0, parentStore, path, hostLink, store })
+                ),
                 retryWhen((error) => error.pipe(delay(retryAfter))),
                 finalize(() => storeDataSet.delete(loadingEntry)),
                 publish()
