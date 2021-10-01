@@ -1,14 +1,27 @@
 import { useEffect, useMemo } from "react"
-import { retryWhen, tap, delay } from "rxjs/operators"
+import { ConnectableObservable, Observable } from "rxjs"
+import { retryWhen, tap, delay, finalize, publish } from "rxjs/operators"
 import { Store, StoreLink, PathEntry } from ".."
 
-const storeDataSet = new Set<{
+type StoreDataSetLoadingEntry = {
+    type: "loading"
+    observable: Observable<[Store, StoreLink]>
+    parentStore: Store
+    path: PathEntry
+}
+
+type StoreDataSetLoadedEntry = {
+    type: "loaded"
     referenceCount: number
     parentStore: Store
     path: PathEntry
     store: Store
     hostLink: StoreLink
-}>()
+}
+
+type StoreDataSetEntry = StoreDataSetLoadingEntry | StoreDataSetLoadedEntry
+
+const storeDataSet = new Set<StoreDataSetEntry>()
 
 export function useChildStore<S extends Store>(
     parentStore: Store,
@@ -23,13 +36,25 @@ export function useChildStore<S extends Store>(
     )
 
     if (storeData == null) {
-        throw parentStore
-            .subscribeToChild(childConstr, storeLink, path)
-            .pipe(
-                tap(([store, hostLink]) => storeDataSet.add({ referenceCount: 0, parentStore, path, hostLink, store })),
-                retryWhen((error) => error.pipe(delay(retryAfter)))
-            )
-            .toPromise()
+        const loadingEntry: StoreDataSetLoadingEntry = {
+            parentStore, 
+            path,
+            type: "loading",
+            observable: null as any
+        }
+        const observable: ConnectableObservable<[Store, StoreLink]> = parentStore
+            .subscribeToChild(childConstr, storeLink, path).pipe(
+                tap(([store, hostLink]) => storeDataSet.add({ type: "loaded", referenceCount: 0, parentStore, path, hostLink, store })),
+                retryWhen((error) => error.pipe(delay(retryAfter))),
+                finalize(() => storeDataSet.delete(loadingEntry)),
+                publish()
+            ) as any
+        loadingEntry.observable = observable
+        storeDataSet.add(loadingEntry)
+        observable.connect()
+        throw observable.toPromise()
+    } else if (storeData.type === "loading") {
+        throw storeData.observable.toPromise()
     }
 
     useEffect(() => {
