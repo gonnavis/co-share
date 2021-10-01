@@ -4,6 +4,7 @@ export function isBrowser() {
 
 export * from "./connection"
 export * from "./store-link"
+export * from "./store-link-cache"
 export * from "./store"
 export * from "./action"
 export * from "./subscriber"

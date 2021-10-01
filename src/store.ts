@@ -1,6 +1,6 @@
-import { Observable, Subject, throwError } from "rxjs"
-import { filter, tap, takeUntil, finalize, map, take } from "rxjs/operators"
-import { Connection, StoreLink, StoreLinkId } from "."
+import { merge, Observable, of, Subject, throwError } from "rxjs"
+import { filter, tap, takeUntil, finalize, map, take, switchMap } from "rxjs/operators"
+import { Connection, StoreLink, StoreLinkCache, StoreLinkId } from "."
 import { ActionIdentifier, Action } from "./action"
 import { Request } from "./request"
 import { Subscriber } from "./subscriber"
@@ -8,15 +8,6 @@ import { Subscriber } from "./subscriber"
 export type PathEntry = string | number
 
 export abstract class Store {
-    public parentStore: Store | undefined
-
-    public get links(): ReadonlyArray<StoreLink> {
-        return Array.from(this.linkSet.values())
-    }
-
-    private linkSet = new Set<StoreLink>()
-
-    public readonly childStoreMap = new Map<PathEntry, Store>()
 
     public readonly actionMap = new Map<ActionIdentifier, Action<Array<any>>>()
 
@@ -26,45 +17,9 @@ export abstract class Store {
 
     public abstract onLink(link: StoreLink): void
 
-    public log = Action.create(this, "log", (origin, log: any) => console.log(origin, log))
+    public log = Action.create("log", (origin, log: any) => console.log(origin, log))(this)
 
-    public addChildStore(store: Store, overwrite: boolean, path: PathEntry) {
-        if (overwrite || !this.childStoreMap.has(path)) {
-            store.parentStore = this
-            this.childStoreMap.set(path, store)
-        } else {
-            throw `Store "${path}" already exists on store (${store}). If you want to overwrite the store, set the overwrite parameter to true.`
-        }
-    }
-
-    public removeChildStore(path: PathEntry) {
-        const store = this.childStoreMap.get(path)
-        if (store != null) {
-            store.parentStore = this
-            this.childStoreMap.delete(path)
-        }
-    }
-
-    subscribeToChild<S extends Store>(
-        storeConstr: new (...params: Array<any>) => S,
-        link: StoreLink,
-        path: PathEntry
-    ): Observable<[S, StoreLink]> {
-        const newLinkId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
-        return this.requestSubscribeToChild.publishTo(link, newLinkId, path).pipe(
-            map((params) => {
-                const store = new storeConstr(...params)
-                const newLink = store.link(newLinkId, link.connection)
-                this.addChildStore(store, false, path)
-                newLink.onDisconnect
-                    .pipe(
-                        take(1),
-                        tap(() => this.removeChildStore(path))
-                    )
-                    .subscribe()
-                return [store, newLink]
-            })
-        )
+    constructor(public readonly path: Array<PathEntry>, public readonly storeLinkCache: StoreLinkCache) {
     }
 
     private requestSubscribeToChild: Request<[id: StoreLinkId, path: PathEntry], Array<any>> = Request.create(
@@ -74,49 +29,78 @@ export abstract class Store {
             if (origin == null) {
                 throw `subscribeToChild can only be executed remotely using "publish"`
             }
-            const childStore = this.childStoreMap.get(path)
-            if (childStore == null) {
-                return throwError(`unable to find child in store at path entry "${path}"`)
+            const entries = this.storeLinkCache.findByPath([...this.path, path])
+            if (entries.length === 0) {
+                return throwError(`unable to find child in store ${this.path} at path entry "${path}"`)
             }
-            if (childStore instanceof childStore.subscriber.storeClass) {
-                return new Observable<Array<any>>((subscriber) =>
-                    childStore.subscriber(
-                        origin.connection,
-                        (...params) => subscriber.next(params),
-                        (reason) => subscriber.error(reason)
-                    )
-                ).pipe(tap(() => childStore.link(id, origin.connection)))
-            } else {
-                return throwError(
-                    "Subscribed store has no correct implemented subscriber. Subscriber must be created with the store class."
-                )
+            if (entries.length > 1) {
+                return throwError(`multiple options for child in store ${this.path} at path entry "${path}"`)
             }
+            return entries[0].subscribe().pipe(
+                switchMap((storeLink) => {
+                    const childStore = storeLink.store
+                    if (childStore instanceof childStore.subscriber.storeClass) {
+                        return new Observable<Array<any>>((subscriber) =>
+                            childStore.subscriber(
+                                origin.connection,
+                                (...params) => subscriber.next(params),
+                                (reason) => subscriber.error(reason)
+                            )
+                        ).pipe(tap(() => childStore.link(id, origin.connection)))
+                    } else {
+                        return throwError(
+                            "Subscribed store has no correct implemented subscriber. Subscriber must be created with the store class."
+                        )
+                    }
+                })
+            )
         }
     )
 
-    unsubscribe = Action.create(this, "unsubscribe", (origin) => {
+    subscribeToChild<S extends Store>(
+        storeFactory: StoreFactory<S>,
+        link: StoreLink,
+        path: PathEntry
+    ): Observable<StoreLink> {
+        const newPath = [...this.path, path]
+        const entries = this.storeLinkCache.findByPath(newPath)
+        const entry = entries.find(entry => entry.get()?.connection === link.connection)
+        if (entry == null) {
+            const newLinkId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
+            return this.storeLinkCache.addLink(
+                newPath,
+                this.requestSubscribeToChild.publishTo(link, newLinkId, path)
+                    .pipe(
+                        switchMap((params) => {
+                            const store = storeFactory(newPath, params)
+                            const observable = store.link(newLinkId, link.connection)
+                            return observable
+                        })
+                    )
+            )
+        } else {
+            return entry.subscribe()
+        }
+    }
+
+    unsubscribe = Action.create("unsubscribe", (origin) => {
         if (origin == null) {
             throw "can't execute usubscribe locally"
         }
-        this.unlink(origin)
-    })
+        origin.close()
+    })(this)
 
-    private unlink(link: StoreLink) {
-        this.linkSet.delete(link)
-        this.onUnlink(link)
-    }
-
-    link(id: StoreLinkId, connection: Connection): StoreLink {
+    link(id: StoreLinkId, connection: Connection): Observable<StoreLink> {
         const onDisconnect = new Subject<void>()
         const storeLink: StoreLink = {
-            onDisconnect,
+            id,
+            store: this,
             connection,
             close: () => onDisconnect.next(),
             publish: (actionName, ...params) => connection.publish(id, actionName, ...params),
         }
-        this.linkSet.add(storeLink)
         this.onLink(storeLink)
-        connection
+        return merge(connection
             .receive()
             .pipe(
                 filter(([_id]) => id === _id),
@@ -135,14 +119,18 @@ export abstract class Store {
                         this.log.publishTo({ to: "one", one: storeLink }, `unkown action ${actionName}`)
                     }
                 }),
-                takeUntil(onDisconnect),
-                finalize(() => this.unlink(storeLink))
-            )
-            .subscribe()
-        return storeLink
+                filter<any>(() => false)
+            ),
+            of(storeLink)
+        ).pipe(
+            takeUntil(onDisconnect),
+            finalize(() => this.onUnlink(storeLink))
+        )
     }
 
     close(): void {
-        this.links.forEach((link) => link.close())
+        this.storeLinkCache.findByPath(this.path).forEach(entry => entry.get()?.close())
     }
 }
+
+export type StoreFactory<S extends Store> = (path: Array<PathEntry>, params: Array<any>) => S

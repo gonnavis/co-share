@@ -3,12 +3,12 @@ import { Store, StoreLink } from "."
 export type ActionIdentifier = string | number
 
 export const Action = {
-    create<Params extends Array<any>>(
-        store: Store,
+    create: <Params extends Array<any>>(
         identifier: ActionIdentifier,
         fn: ActionFunction<Params>,
         overwrite = false
-    ): Action<Params> {
+    ): UnbindedAction<Params> =>
+        (store: Store) => {
         const action: Action<Params> = Object.assign(
             (...params: Params) => {
                 fn(undefined, ...params)
@@ -26,7 +26,7 @@ export const Action = {
                     }
                 },
                 publishTo: (targetDescription: PublishActionTargetDescription, ...params: Params) => {
-                    const targets = convertActionTargetDescriptionToTargets(targetDescription, store.links)
+                    const targets = convertActionTargetDescriptionToTargets(targetDescription, store.storeLinkCache.findByPath(store.path).map(entry => entry.get()).filter(filterNull))
                     for (const target of targets) {
                         target.publish(identifier, ...params)
                     }
@@ -40,7 +40,11 @@ export const Action = {
             throw `Action "${identifier}" already exists on store (${store}). If you want to overwrite the action, set the overwrite parameter to true.`
         }
         return action
-    },
+    }
+}
+
+export function filterNull<S>(val: S | undefined): val is S {
+    return val != null
 }
 
 function convertActionTargetDescriptionToTargets(
@@ -68,6 +72,8 @@ export type Action<Params extends Array<any>> = ((...params: Params) => void) & 
     forwardFrom(origin: StoreLink, ...params: Params): void
     identifier: ActionIdentifier
 }
+
+export type UnbindedAction<Params extends Array<any>> = (store: Store) => Action<Params>
 
 export type PublishActionTargetDescription =
     | {

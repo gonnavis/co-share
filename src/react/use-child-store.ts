@@ -1,19 +1,18 @@
 import { useEffect, useMemo } from "react"
 import { retryWhen, tap, delay } from "rxjs/operators"
-import { Store, StoreLink, PathEntry } from ".."
+import { Store, StoreLink, PathEntry, StoreFactory } from ".."
 
 const storeDataSet = new Set<{
     referenceCount: number
     parentStore: Store
     path: PathEntry
-    store: Store
-    hostLink: StoreLink
+    storeLink: StoreLink
 }>()
 
 export function useChildStore<S extends Store>(
     parentStore: Store,
-    storeLink: StoreLink,
-    childConstr: new (...params: Array<any>) => S,
+    parentStoreLink: StoreLink,
+    storeFactory: StoreFactory<S>,
     retryAfter: number,
     path: PathEntry
 ): S {
@@ -24,9 +23,9 @@ export function useChildStore<S extends Store>(
 
     if (storeData == null) {
         throw parentStore
-            .subscribeToChild(childConstr, storeLink, path)
+            .subscribeToChild(storeFactory, parentStoreLink, path)
             .pipe(
-                tap(([store, hostLink]) => storeDataSet.add({ referenceCount: 0, parentStore, path, hostLink, store })),
+                tap((hostLink) => storeDataSet.add({ referenceCount: 0, parentStore, path, storeLink: hostLink })),
                 retryWhen((error) => error.pipe(delay(retryAfter)))
             )
             .toPromise()
@@ -37,11 +36,11 @@ export function useChildStore<S extends Store>(
         return () => {
             storeData.referenceCount -= 1
             if (storeData.referenceCount === 0) {
-                storeData.store.unsubscribe.publishTo({ to: "one", one: storeData.hostLink })
-                storeData.hostLink.close()
+                storeData.storeLink.store.unsubscribe.publishTo({ to: "one", one: storeData.storeLink })
+                storeData.storeLink.close()
                 storeDataSet.delete(storeData)
             }
         }
     }, [storeData])
-    return storeData.store as S
+    return storeData.storeLink.store as S
 }
