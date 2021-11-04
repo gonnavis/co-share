@@ -7,9 +7,53 @@ import { Subscriber } from "./subscriber"
 
 export type PathEntry = string | number
 
-export abstract class Store {
+export const LogAction = Action.createUnbound("log", function (origin, log: any) {
+    console.log(this, origin, log)
+})
 
-    public readonly actionMap = new Map<ActionIdentifier, Action<Array<any>>>()
+export const UnsubscribeAction = Action.createUnbound("unsubscribe", (origin) => {
+    if (origin == null) {
+        throw "can't execute unsubscribe locally"
+    }
+    origin.close()
+})
+
+export const SubscribeToChildRequest = Request.createUnbound(
+    "requestSubscribeToChild",
+    function (origin: StoreLink | undefined, id: StoreLinkId, path: PathEntry) {
+        if (origin == null) {
+            throw `subscribeToChild can only be executed remotely using "publish"`
+        }
+        const entries = this.storeLinkCache.findByPath([...this.path, path])
+        if (entries.length === 0) {
+            return throwError(`unable to find child in store ${this.path} at path entry "${path}"`)
+        }
+        if (entries.length > 1) {
+            return throwError(`multiple options for child in store ${this.path} at path entry "${path}"`)
+        }
+        return entries[0].subscribe().pipe(
+            switchMap((storeLink) => {
+                const childStore = storeLink.store
+                if (childStore instanceof childStore.subscriber.storeClass) {
+                    return new Observable<Array<any>>((subscriber) =>
+                        childStore.subscriber(
+                            origin.connection,
+                            (...params) => subscriber.next(params),
+                            (reason) => subscriber.error(reason)
+                        )
+                    ).pipe(tap(() => childStore.link(id, origin.connection)))
+                } else {
+                    return throwError(
+                        "Subscribed store has no correct implemented subscriber. Subscriber must be created with the store class."
+                    )
+                }
+            })
+        )
+    }
+)
+
+export abstract class Store {
+    public readonly actionMap = new Map<ActionIdentifier, Action<this, Array<any>>>()
 
     public abstract subscriber: Subscriber<Store, Array<any>>
 
@@ -17,45 +61,11 @@ export abstract class Store {
 
     public abstract onLink(link: StoreLink): void
 
-    public log = Action.create("log", (origin, log: any) => console.log(origin, log))(this)
+    log = LogAction.bindTo(this)
+    unsubscribe = UnsubscribeAction.bindTo(this)
+    private requestSubscribeToChild = SubscribeToChildRequest.bindTo(this)
 
-    constructor(public readonly path: Array<PathEntry>, public readonly storeLinkCache: StoreLinkCache) {
-    }
-
-    private requestSubscribeToChild: Request<[id: StoreLinkId, path: PathEntry], Array<any>> = Request.create(
-        this,
-        "requestSubscribeToChild",
-        (origin: StoreLink | undefined, id: StoreLinkId, path: PathEntry) => {
-            if (origin == null) {
-                throw `subscribeToChild can only be executed remotely using "publish"`
-            }
-            const entries = this.storeLinkCache.findByPath([...this.path, path])
-            if (entries.length === 0) {
-                return throwError(`unable to find child in store ${this.path} at path entry "${path}"`)
-            }
-            if (entries.length > 1) {
-                return throwError(`multiple options for child in store ${this.path} at path entry "${path}"`)
-            }
-            return entries[0].subscribe().pipe(
-                switchMap((storeLink) => {
-                    const childStore = storeLink.store
-                    if (childStore instanceof childStore.subscriber.storeClass) {
-                        return new Observable<Array<any>>((subscriber) =>
-                            childStore.subscriber(
-                                origin.connection,
-                                (...params) => subscriber.next(params),
-                                (reason) => subscriber.error(reason)
-                            )
-                        ).pipe(tap(() => childStore.link(id, origin.connection)))
-                    } else {
-                        return throwError(
-                            "Subscribed store has no correct implemented subscriber. Subscriber must be created with the store class."
-                        )
-                    }
-                })
-            )
-        }
-    )
+    constructor(public readonly path: Array<PathEntry>, public readonly storeLinkCache: StoreLinkCache) {}
 
     subscribeToChild<S extends Store>(
         storeFactory: StoreFactory<S>,
@@ -64,31 +74,23 @@ export abstract class Store {
     ): Observable<StoreLink> {
         const newPath = [...this.path, path]
         const entries = this.storeLinkCache.findByPath(newPath)
-        const entry = entries.find(entry => entry.get()?.connection === link.connection)
+        const entry = entries.find((entry) => entry.get()?.connection === link.connection)
         if (entry == null) {
             const newLinkId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
             return this.storeLinkCache.addLink(
                 newPath,
-                this.requestSubscribeToChild.publishTo(link, newLinkId, path)
-                    .pipe(
-                        switchMap((params) => {
-                            const store = storeFactory(newPath, params)
-                            const observable = store.link(newLinkId, link.connection)
-                            return observable
-                        })
-                    )
+                this.requestSubscribeToChild.publishTo(link, newLinkId, path).pipe(
+                    switchMap((params) => {
+                        const store = storeFactory(newPath, params)
+                        const observable = store.link(newLinkId, link.connection)
+                        return observable
+                    })
+                )
             )
         } else {
             return entry.subscribe()
         }
     }
-
-    unsubscribe = Action.create("unsubscribe", (origin) => {
-        if (origin == null) {
-            throw "can't execute usubscribe locally"
-        }
-        origin.close()
-    })(this)
 
     link(id: StoreLinkId, connection: Connection): Observable<StoreLink> {
         const onDisconnect = new Subject<void>()
@@ -100,9 +102,8 @@ export abstract class Store {
             publish: (actionName, ...params) => connection.publish(id, actionName, ...params),
         }
         this.onLink(storeLink)
-        return merge(connection
-            .receive()
-            .pipe(
+        return merge(
+            connection.receive().pipe(
                 filter(([_id]) => id === _id),
                 tap(([, actionName, ...params]) => {
                     const action = this.actionMap.get(actionName)
@@ -129,7 +130,7 @@ export abstract class Store {
     }
 
     close(): void {
-        this.storeLinkCache.findByPath(this.path).forEach(entry => entry.get()?.close())
+        this.storeLinkCache.findByPath(this.path).forEach((entry) => entry.get()?.close())
     }
 }
 

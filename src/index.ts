@@ -1,5 +1,9 @@
-export function isBrowser() {
+export function isBrowser(): boolean {
     return ![typeof window, typeof document].includes("undefined")
+}
+
+export function filterNull<S>(val: S | undefined): val is S {
+    return val != null
 }
 
 export * from "./connection"
