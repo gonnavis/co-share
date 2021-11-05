@@ -1,12 +1,12 @@
 import React, { useMemo } from "react"
 import { CounterStore } from "../stores/counter"
 import create from "zustand"
-import { useChildStore } from "co-share/react"
+import { useStoreSubscription } from "co-share/react"
 import { Simulator } from "../components/simulator"
 import { Header } from "../components/header"
 import MD from "../content/counter.md"
 import { Footer } from "../components/footer"
-import { RootStore } from "../stores/root-store"
+import { RootStore } from "co-share"
 
 export default function Index() {
     return (
@@ -16,7 +16,7 @@ export default function Index() {
                 <div className="d-flex flex-row-responsive">
                     <Simulator
                         twoClients
-                        initStore={(rootStore) => rootStore.addChildStore(new CounterStore(0), false, "counter")}>
+                        initStores={(rootStore) => rootStore.addStore(new CounterStore(0), "counter")}>
                         {(rootStore) => <CounterExamplePage rootStore={rootStore} />}
                     </Simulator>
                 </div>
@@ -30,8 +30,20 @@ export default function Index() {
 }
 
 function CounterExamplePage({ rootStore }: { rootStore: RootStore }) {
-    const store = useChildStore(rootStore, rootStore.links[0], CounterStore, 1000, "counter")
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const store = useStoreSubscription(
+        "counter",
+        1000,
+        (value: number) => new CounterStore(value),
+        undefined,
+        rootStore
+    )
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                counter: number
+            }>(store.state),
+        [store]
+    )
 
     const { counter } = useStoreState()
 

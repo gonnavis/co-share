@@ -3,7 +3,7 @@ import { Store } from "./store"
 
 export const Subscriber = {
     create<S extends Store, Params extends Array<any>>(
-        storeClass: { new (...params: Params): S },
+        storeClass: { new (...params: Array<any>): S },
         subscriber: SubscriberFn<Params>
     ): Subscriber<S, Params> {
         return Object.assign(subscriber, { storeClass })
@@ -16,6 +16,10 @@ export type SubscriberFn<Params extends Array<any>> = (
     deny: (reason: string) => void
 ) => void
 
-export type Subscriber<S extends Store = Store, Params extends Array<any> = Array<any>> = SubscriberFn<Params> & {
-    storeClass: { new (...params: Params): S }
+export type SubscriberGetParams<S extends Subscriber<Store, Array<any>>> = S extends Subscriber<Store, infer T>
+    ? T
+    : never
+
+export type Subscriber<S extends Store, Params extends Array<any>> = SubscriberFn<Params> & {
+    storeClass: { new (...params: Array<any>): S }
 }

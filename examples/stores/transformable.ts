@@ -17,10 +17,13 @@ export class TransformableStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(TransformableStore, (connection, accept, deny) => {
-        const s = this.state.getState()
-        accept(s.matrix, s.owner)
-    })
+    public subscriber: Subscriber<TransformableStore, [Array<number>, string]> = Subscriber.create(
+        TransformableStore,
+        (connection, accept, deny) => {
+            const s = this.state.getState()
+            accept(s.matrix, s.owner)
+        }
+    )
 
     constructor(matrix: Array<number>, owner: string) {
         super()
@@ -28,14 +31,14 @@ export class TransformableStore extends Store {
         this.history = new History(this.state.getState(), (presence) => this.state.setState(presence))
     }
 
-    setLock: Request<[string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
+    setLock: Request<this, [string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
         if (origin != null) {
             this.forceLock(owner)
             this.forceLock.publishTo({ to: "all-except-one", except: origin }, owner)
             return of(true)
         } else {
             const resolve = this.history.maybeNext(({ matrix }) => ({ owner, matrix }))
-            return this.setLock.publishTo(this.links[0], owner).pipe(tap((keep) => resolve(keep)))
+            return this.setLock.publishTo(this.mainLink, owner).pipe(tap((keep) => resolve(keep)))
         }
     })
 

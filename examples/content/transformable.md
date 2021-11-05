@@ -1,9 +1,6 @@
-# Transformable Example
+# Transformable Example Source Code
 
-With co-share you are not limited to simple numbers or text which you can share live with others.  
-Co-Share can also enable any kind of value or state you want for sharing. Even the position of 3D Objects!
-
-Let's see how it works ...
+[`transformable.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/transformable.ts)
 
 ```typescript
 export class TransformableStore extends Store {
@@ -19,10 +16,13 @@ export class TransformableStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(TransformableStore, (connection, accept, deny) => {
-        const s = this.state.getState()
-        accept(s.matrix, s.owner)
-    })
+    public subscriber: Subscriber<TransformableStore, [Array<number>, string]> = Subscriber.create(
+        TransformableStore,
+        (connection, accept, deny) => {
+            const s = this.state.getState()
+            accept(s.matrix, s.owner)
+        }
+    )
 
     constructor(matrix: Array<number>, owner: string) {
         super()
@@ -30,14 +30,14 @@ export class TransformableStore extends Store {
         this.history = new History(this.state.getState(), (presence) => this.state.setState(presence))
     }
 
-    setLock: Request<[string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
+    setLock: Request<this, [string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
         if (origin != null) {
             this.forceLock(owner)
             this.forceLock.publishTo({ to: "all-except-one", except: origin }, owner)
             return of(true)
         } else {
             const resolve = this.history.maybeNext(({ matrix }) => ({ owner, matrix }))
-            return this.setLock.publishTo(this.links[0], owner).pipe(tap((keep) => resolve(keep)))
+            return this.setLock.publishTo(this.mainLink, owner).pipe(tap((keep) => resolve(keep)))
         }
     })
 
@@ -68,35 +68,19 @@ export class TransformableStore extends Store {
 }
 ```
 
+[`transformable.tsx`](https://github.com/cocoss-org/co-share/blob/master/examples/pages/transformable.tsx)
+
 ```typescript
-const helperMatrix = new Matrix4()
-export function useSyncTransformable(
-    state: StoreApi<{ matrix: Array<number>; owner: string }>,
-    objectRef: MutableRefObject<Object3D | null>
-): { ownerRef: MutableRefObject<string> } {
-    const helperMatrix = useMemo(() => new Matrix4(), [])
-    const ownerRef = useRef<string>(state.getState().owner)
+export function TransformableExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
+    const store = useStoreSubscription(
+        "transformable",
+        1000,
+        (matrix: Array<number>, owner: string) => new TransformableStore(matrix, owner),
+        undefined,
+        rootStore
+    )
 
-    useEffect(() => {
-        const updateTransform = ({ matrix, owner }: { matrix: Array<number>; owner: string }) => {
-            ownerRef.current = owner
-            if (objectRef.current != null) {
-                helperMatrix.fromArray(matrix)
-                objectRef.current.position.setFromMatrixPosition(helperMatrix)
-                objectRef.current.scale.setFromMatrixScale(helperMatrix)
-                objectRef.current.quaternion.setFromRotationMatrix(helperMatrix)
-            }
-        }
-        updateTransform(state.getState())
-        return state.subscribe(updateTransform)
-    }, [state])
-    return { ownerRef }
-}
-
-export function TransformableExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], TransformableStore, 1000, "transformable")
-
-    const id = useMemo(() => rootStore.links[0].connection.userData.id, [rootStore])
+    const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
 
     return (
         <Canvas>
@@ -107,7 +91,7 @@ export function TransformableExamplePage({ rootStore }: { rootStore: Store }) {
     )
 }
 
-export function Block({ store, id }: { store: TransformableStore; id: string }) {
+export function Block({ store, id }: { store: TransformableStore; id: string }): JSX.Element {
     const grabbedRef = useRef(false)
     const helperArray = useMemo<Array<number>>(() => [], [])
 

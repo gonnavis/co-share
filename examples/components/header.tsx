@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 const pages: Array<{ title: string; url: string }> = [
     {
-        title: "Counter",
+        title: "Tutorial",
         url: "/counter",
     },
     {
@@ -14,10 +14,10 @@ const pages: Array<{ title: string; url: string }> = [
         title: "Message",
         url: "/message",
     },
-    {
+    /*{
         title: "Group Chat",
         url: "/group-chat",
-    },
+    },*/
     {
         title: "Lockable",
         url: "/lockable",

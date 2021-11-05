@@ -1,14 +1,14 @@
-import { useChildStore } from "co-share/react"
+import { useStoreSubscription } from "co-share/react"
 import React, { useMemo, useRef } from "react"
 import create from "zustand"
-import { Store } from "co-share"
+import { RootStore } from "co-share"
 import { MessagesStore } from "../stores/message"
 import { Simulator } from "../components/simulator"
 import { Header } from "../components/header"
 import MD from "../content/message.md"
 import { Footer } from "../components/footer"
 
-export default function Index() {
+export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
             <Header selectedIndex={2} />
@@ -16,7 +16,7 @@ export default function Index() {
                 <div className="d-flex flex-row-responsive">
                     <Simulator
                         twoClients
-                        initStore={(rootStore) => rootStore.addChildStore(new MessagesStore([]), false, "messages")}>
+                        initStores={(rootStore) => rootStore.addStore(new MessagesStore([]), "messages")}>
                         {(rootStore) => <MessagesSamplePage rootStore={rootStore} />}
                     </Simulator>
                 </div>
@@ -29,11 +29,27 @@ export default function Index() {
     )
 }
 
-export function MessagesSamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], MessagesStore, 1000, "messages")
+export function MessagesSamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
+    const store = useStoreSubscription(
+        "messages",
+        1000,
+        (clients: Array<string>) => new MessagesStore(clients),
+        undefined,
+        rootStore
+    )
 
-    const id = useMemo(() => rootStore.links[0].connection.userData.id, [rootStore])
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                clients: string[]
+                messages: {
+                    senderId: string
+                    message: string
+                }[]
+            }>(store.state),
+        [store]
+    )
 
     const messages = useStoreState((store) => store.messages)
     const clients = useStoreState((store) => store.clients)
@@ -56,7 +72,13 @@ export function MessagesSamplePage({ rootStore }: { rootStore: Store }) {
     )
 }
 
-export function Client({ sendMessage, client }: { client: string, sendMessage: (receiverId: string, message: string) => void }) {
+export function Client({
+    sendMessage,
+    client,
+}: {
+    client: string
+    sendMessage: (receiverId: string, message: string) => void
+}): JSX.Element {
     const inputRef = useRef<HTMLInputElement>(null)
     return (
         <div>

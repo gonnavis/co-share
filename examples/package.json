@@ -22,7 +22,7 @@
         "sass": "^1.37.5",
         "three": "^0.131.3",
         "uuid": "^8.3.2",
-        "zustand": "^3.5.7"
+        "zustand": "^3.6.4"
     },
     "devDependencies": {
         "@types/three": "^0.130.1",

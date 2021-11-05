@@ -1,5 +1,5 @@
-import { Store } from "co-share"
-import { useChildStore } from "co-share/react"
+import { RootStore } from "co-share"
+import { useStoreSubscription } from "co-share/react"
 import React, { useMemo, useRef } from "react"
 import create from "zustand"
 import { Header } from "../components/header"
@@ -8,7 +8,7 @@ import { OptimisticLockableStore } from "../stores/optimistic-lockable"
 import MD from "../content/optimistic-lockable.md"
 import { Footer } from "../components/footer"
 
-export default function Index() {
+export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
             <Header selectedIndex={5} />
@@ -16,12 +16,8 @@ export default function Index() {
                 <div className="d-flex flex-row-responsive">
                     <Simulator
                         twoClients
-                        initStore={(rootStore) =>
-                            rootStore.addChildStore(
-                                new OptimisticLockableStore(0, "none"),
-                                false,
-                                "optimistic-lockable"
-                            )
+                        initStores={(rootStore) =>
+                            rootStore.addStore(new OptimisticLockableStore(0, "none"), "optimistic-lockable")
                         }>
                         {(rootStore) => <OptimisticLockableExamplePage rootStore={rootStore} />}
                     </Simulator>
@@ -35,14 +31,27 @@ export default function Index() {
     )
 }
 
-export function OptimisticLockableExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], OptimisticLockableStore, 1000, "optimistic-lockable")
+export function OptimisticLockableExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
+    const store = useStoreSubscription(
+        "optimistic-lockable",
+        1000,
+        (value: number, owner: string) => new OptimisticLockableStore(value, owner),
+        undefined,
+        rootStore
+    )
 
-    const id = useMemo(() => rootStore.links[0].connection.userData.id, [rootStore])
+    const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
 
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                value: number
+                owner: string
+            }>(store.state),
+        [store]
+    )
 
     const { owner, value } = useStoreState()
 

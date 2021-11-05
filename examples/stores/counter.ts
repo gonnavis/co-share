@@ -1,10 +1,11 @@
-import { Store, Action, StoreLink, Subscriber, isBrowser } from "co-share"
+import { Store, Action, StoreLink, Subscriber } from "co-share"
 import { StoreApi } from "zustand"
 import create from "zustand/vanilla"
 
 export class CounterStore extends Store {
-    public subscriber: Subscriber = Subscriber.create(CounterStore, (connection, accept, deny) =>
-        accept(this.state.getState().counter)
+    public subscriber: Subscriber<CounterStore, [number]> = Subscriber.create(
+        CounterStore,
+        (connection, accept, deny) => accept(this.state.getState().counter)
     )
 
     public state: StoreApi<{ counter: number }>

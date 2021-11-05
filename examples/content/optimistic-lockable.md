@@ -1,10 +1,9 @@
-# Optimistic Lockable Example
+**for demonstration purposes there is a 50% change of failing when requesting a lock**
+**however, as soon as it failes a new request will be send**
 
-A variant of the Lockable.  
-To achieve a better experience for the clients, it is beneficial to assume things like locks are granted before the server responds to get a more fluid user experience!  
-The Optimistic Lockable shows exactly that capability.
+# Optimistic Lockable Example Source Code
 
-Let's see how it works ...
+[`optimistic-lockable.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/optimistic-lockable.ts)
 
 ```typescript
 export class OptimisticLockableStore extends Store {
@@ -15,10 +14,13 @@ export class OptimisticLockableStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(OptimisticLockableStore, (connection, accept, deny) => {
-        const s = this.state.getState()
-        accept(s.value, s.owner)
-    })
+    public subscriber: Subscriber<OptimisticLockableStore, [number, string]> = Subscriber.create(
+        OptimisticLockableStore,
+        (connection, accept, deny) => {
+            const s = this.state.getState()
+            accept(s.value, s.owner)
+        }
+    )
 
     constructor(value: number, owner: string) {
         super()
@@ -26,7 +28,7 @@ export class OptimisticLockableStore extends Store {
         this.history = new History(this.state.getState(), (presence) => this.state.setState(presence))
     }
 
-    setSliderLock: Request<[string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
+    setSliderLock: Request<this, [string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
         if (origin != null) {
             if (Math.random() > 0.5) {
                 this.history.next(({ value }) => ({
@@ -39,7 +41,7 @@ export class OptimisticLockableStore extends Store {
             return of(false)
         } else {
             const resolve = this.history.maybeNext(({ value }) => ({ owner, value }))
-            return this.setSliderLock.publishTo(this.links[0], owner).pipe(tap((keep) => resolve(keep)))
+            return this.setSliderLock.publishTo(this.mainLink, owner).pipe(tap((keep) => resolve(keep)))
         }
     })
 
@@ -70,20 +72,35 @@ export class OptimisticLockableStore extends Store {
 }
 ```
 
-```typescript
-export function OptimisticLockableExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], OptimisticLockableStore, 1000, "optimistic-lockable")
+[`optimistic-lockable.tsx`](https://github.com/cocoss-org/co-share/blob/master/examples/pages/optimistic-lockable.tsx)
 
-    const id = useMemo(() => rootStore.links[0].connection.userData.id, [rootStore])
+```typescript
+export function OptimisticLockableExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
+    const store = useStoreSubscription(
+        "optimistic-lockable",
+        1000,
+        (value: number, owner: string) => new OptimisticLockableStore(value, owner),
+        undefined,
+        rootStore
+    )
+
+    const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
 
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                value: number
+                owner: string
+            }>(store.state),
+        [store]
+    )
 
     const { owner, value } = useStoreState()
 
     return (
-        <div>
+        <div className="p-3">
             <button className="btn btn-outline-primary" onClick={() => store.setSliderLock("none").subscribe()}>
                 release
             </button>

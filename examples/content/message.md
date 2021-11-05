@@ -1,15 +1,18 @@
-# Message Example
+# Message Example Source Code
 
-Let's see how it works ...
+[`message.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/message.ts)
 
 ```typescript
 export class MessagesStore extends Store {
     public state: StoreApi<{ clients: Array<string>; messages: Array<{ senderId: string; message: string }> }>
 
-    public subscriber: Subscriber = Subscriber.create(MessagesStore, (connection, accept, deny) => {
-        this.addClient(connection.userData.id)
-        accept(this.state.getState().clients.filter((id) => id != connection.userData.id))
-    })
+    public subscriber: Subscriber<MessagesStore, [Array<string>]> = Subscriber.create(
+        MessagesStore,
+        (connection, accept, deny) => {
+            this.addClient(connection.userData.id)
+            accept(this.state.getState().clients.filter((id) => id != connection.userData.id))
+        }
+    )
 
     public sendMessage = Action.create(
         this,
@@ -17,9 +20,9 @@ export class MessagesStore extends Store {
         (origin, senderId: string, receiverId: string, message: string) => {
             //the following routing algorithm assumes a star topology
             if (origin == null) {
-                this.sendMessage.publishTo({ to: "one", one: this.links[0] }, senderId, receiverId, message)
+                this.sendMessage.publishTo({ to: "one", one: this.mainLink }, senderId, receiverId, message)
             } else if (origin.connection.userData.id === senderId) {
-                const link = this.links.find((link) => link.connection.userData.id === receiverId)
+                const link = Array.from(this.linkSet).find((link) => link.connection.userData.id === receiverId)
                 if (link == null) {
                     throw `unable to find connection with receiver id ${receiverId}`
                 }
@@ -34,12 +37,13 @@ export class MessagesStore extends Store {
 
     constructor(clients: Array<string>) {
         super()
-        this.state = create<{ clients: Array<string>; messages: Array<{ senderId: string; message: string }> }>(
-            () => ({ messages: [], clients })
-        )
+        this.state = create<{ clients: Array<string>; messages: Array<{ senderId: string; message: string }> }>(() => ({
+            messages: [],
+            clients,
+        }))
     }
 
-    public onLink(link: StoreLink): void { }
+    public onLink(link: StoreLink): void {}
 
     private addClient = Action.create(this, "addClient", (origin, clientInfo: string) => {
         this.state.setState({
@@ -61,12 +65,30 @@ export class MessagesStore extends Store {
 }
 ```
 
-```typescript
-export function MessagesSamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], MessagesStore, 1000, "messages")
+[`message.tsx`](https://github.com/cocoss-org/co-share/blob/master/examples/pages/message.tsx)
 
-    const id = useMemo(() => rootStore.links[0].connection.userData.id, [rootStore])
-    const useStoreState = useMemo(() => create(store.state), [store])
+```typescript
+export function MessagesSamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
+    const store = useStoreSubscription(
+        "messages",
+        1000,
+        (clients: Array<string>) => new MessagesStore(clients),
+        undefined,
+        rootStore
+    )
+
+    const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                clients: string[]
+                messages: {
+                    senderId: string
+                    message: string
+                }[]
+            }>(store.state),
+        [store]
+    )
 
     const messages = useStoreState((store) => store.messages)
     const clients = useStoreState((store) => store.clients)
@@ -88,10 +110,14 @@ export function MessagesSamplePage({ rootStore }: { rootStore: Store }) {
         </div>
     )
 }
-```
 
-```typescript
-export function Client({ sendMessage, client }: { client: string, sendMessage: (receiverId: string, message: string) => void }) {
+export function Client({
+    sendMessage,
+    client,
+}: {
+    client: string
+    sendMessage: (receiverId: string, message: string) => void
+}): JSX.Element {
     const inputRef = useRef<HTMLInputElement>(null)
     return (
         <div>
