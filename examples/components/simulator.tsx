@@ -1,29 +1,28 @@
 import { Suspense, useEffect, useMemo, useState } from "react"
-import { Connection, RootStoreDefaultLinkId } from "co-share"
+import { Connection, createRootStore, RootStore, RootStoreDefaultLinkId } from "co-share"
 import { ServerStub } from "../server-stub"
-import { RootStore } from "../stores/root-store"
 
 export function Simulator({
     children,
-    initStore,
+    initStores,
     log,
     twoClients,
 }: {
     log?: boolean
-    initStore: (rootStore: RootStore) => void
-    children: (rootStore: RootStore) => JSX.Element
+    initStores: (rootStore: RootStore) => void
     twoClients?: boolean
-}) {
+    children: (rootStore: RootStore) => JSX.Element
+}): JSX.Element | null {
     const [connections, setConnections] = useState<Array<Connection> | undefined>(undefined)
 
     useEffect(() => {
-        const rootStore = new RootStore()
-        initStore(rootStore)
+        const rootStore = createRootStore()
+        initStores(rootStore)
         const serverStub = new ServerStub(rootStore, log ?? false)
         Promise.all(new Array(twoClients ? 2 : 1).fill(null).map(() => serverStub.createConnection())).then(
             setConnections
         )
-    }, [log, setConnections, initStore, twoClients])
+    }, [log, setConnections, initStores, twoClients])
 
     if (connections == null) {
         return null
@@ -31,14 +30,12 @@ export function Simulator({
 
     return (
         <>
-            {connections.map((connection, index) => (
+            {connections.map((connection) => (
                 <div
                     className="d-flex flex-column flex-grow-1 flex-basis-0 m-3 flex-shrink-1"
                     key={connection.userData.id}>
                     <h6>Client {connection.userData.id}</h6>
-                    <div
-                        key={connection.userData.id}
-                        className="flex-grow-1 flex-basis-0 border border-2 rounded-3">
+                    <div key={connection.userData.id} className="flex-grow-1 flex-basis-0 border border-2 rounded-3">
                         <View connection={connection} children={children} />
                     </div>
                 </div>
@@ -53,19 +50,12 @@ export function View({
 }: {
     connection: Connection
     children: (rootStore: RootStore) => JSX.Element
-}) {
+}): JSX.Element {
     const rootStore = useMemo(() => {
-        if (connection == null) {
-            return undefined
-        }
-        const store = new RootStore()
-        store.link(RootStoreDefaultLinkId, connection)
-        return store
+        const rootStore = createRootStore()
+        rootStore.link(RootStoreDefaultLinkId, connection)
+        return rootStore
     }, [connection])
-
-    if (rootStore == null) {
-        return <span>Connecting to root store ...</span>
-    }
 
     return <Suspense fallback={"loading ..."}>{children(rootStore)}</Suspense>
 }

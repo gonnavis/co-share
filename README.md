@@ -14,7 +14,7 @@ By using js & node.js the same code can be used on the client and on the server 
 
 ## **How to use**
 
-The library is framework independent as it runs on the `Web` and `NodeJS`. However, we provide `react` hooks out of the box to simplify the experience. *Please help us to build tools for more web frameworks.*
+The library is framework independent as it runs on the `Web` and `NodeJS`. However, we provide `react` hooks out of the box to simplify the experience. _Please help us to build tools for more web frameworks._
 
 ```typescript
 new Example extends Store {
@@ -31,17 +31,16 @@ new Example extends Store {
 
 The `Stores` contain the platform **platform indepedent logic** and **data**. `Stores` can contain `Action`s, which can remote method invocation. Above we use `publishTo` to make the targetted store execute the action with the provided `parameter`.
 
-
 ## [**Examples**](https://cocoss-org.github.io/co-share)
 
-* [Counter](https://cocoss-org.github.io/co-share/counter) - a global synchronized counter that can be increased asynchronously by every client
-* [Request](https://cocoss-org.github.io/co-share/request) - request response paradigma
-* [Group Chat](https://cocoss-org.github.io/co-share/group-chat) - a whatsapp like chat implementation
-* [Message](https://cocoss-org.github.io/co-share/message) - direct client to client messaging without any persistent storage in between
-* [Lockable](https://cocoss-org.github.io/co-share/lockable) - advanced lock functionality to prevent editing by multiple people simultaneously 
-* [Optimistic Lockable](https://cocoss-org.github.io/co-share/optimistic-lockable) - performance optimize lockable that allows for optimistic behaviour and error correction
-* [Whiteboard](https://cocoss-org.github.io/co-share/whiteboard) - collaborative drawing on a shared whiteboard
-* [Transformable](https://cocoss-org.github.io/co-share/transformable) - shared 3D transformation
+-   [Counter](https://cocoss-org.github.io/co-share/counter) - a global synchronized counter that can be increased asynchronously by every client
+-   [Request](https://cocoss-org.github.io/co-share/request) - request response paradigma
+<!-- * [Group Chat](https://cocoss-org.github.io/co-share/group-chat) - a whatsapp like chat implementation -->
+-   [Message](https://cocoss-org.github.io/co-share/message) - direct client to client messaging without any persistent storage in between
+-   [Lockable](https://cocoss-org.github.io/co-share/lockable) - advanced lock functionality to prevent editing by multiple people simultaneously
+-   [Optimistic Lockable](https://cocoss-org.github.io/co-share/optimistic-lockable) - performance optimize lockable that allows for optimistic behaviour and error correction
+-   [Whiteboard](https://cocoss-org.github.io/co-share/whiteboard) - collaborative drawing on a shared whiteboard
+-   [Transformable](https://cocoss-org.github.io/co-share/transformable) - shared 3D transformation
 
 ## Example Architecture
 

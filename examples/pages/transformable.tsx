@@ -2,8 +2,8 @@ import React, { MutableRefObject, useEffect, useMemo, useRef } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Matrix4, Mesh, Object3D, Vector3 } from "three"
 import { TransformableStore } from "../stores/transformable"
-import { Store } from "co-share"
-import { useChildStore } from "co-share/react"
+import { RootStore } from "co-share"
+import { useStoreSubscription } from "co-share/react"
 import { StoreApi } from "zustand"
 import { Simulator } from "../components/simulator"
 import { Header } from "../components/header"
@@ -18,10 +18,9 @@ export default function Index() {
                 <div className="d-flex flex-row-responsive">
                     <Simulator
                         twoClients
-                        initStore={(rootStore) =>
-                            rootStore.addChildStore(
+                        initStores={(rootStore) =>
+                            rootStore.addStore(
                                 new TransformableStore([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], "none"),
-                                false,
                                 "transformable"
                             )
                         }>
@@ -61,10 +60,16 @@ export function useSyncTransformable(
     return { ownerRef }
 }
 
-export function TransformableExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], TransformableStore, 1000, "transformable")
+export function TransformableExamplePage({ rootStore }: { rootStore: RootStore }) {
+    const store = useStoreSubscription(
+        "transformable",
+        1000,
+        (matrix: Array<number>, owner: string) => new TransformableStore(matrix, owner),
+        undefined,
+        rootStore
+    )
 
-    const id = useMemo(() => rootStore.links[0].connection.userData.id, [rootStore])
+    const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
 
     return (
         <Canvas>

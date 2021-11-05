@@ -1,1 +1,1 @@
-export * from "./use-child-store"
+export * from "./use-store-subscription"

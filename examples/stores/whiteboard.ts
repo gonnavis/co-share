@@ -17,7 +17,10 @@ export class WhiteboardStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(WhiteboardStore, (connection, accept, deny) => accept(this.lines))
+    public subscriber: Subscriber<WhiteboardStore, [Array<Line>]> = Subscriber.create(
+        WhiteboardStore,
+        (connection, accept, deny) => accept(this.lines)
+    )
 
     constructor(lines: Array<Line>) {
         super()

@@ -13,10 +13,13 @@ export class OptimisticLockableStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(OptimisticLockableStore, (connection, accept, deny) => {
-        const s = this.state.getState()
-        accept(s.value, s.owner)
-    })
+    public subscriber: Subscriber<OptimisticLockableStore, [number, string]> = Subscriber.create(
+        OptimisticLockableStore,
+        (connection, accept, deny) => {
+            const s = this.state.getState()
+            accept(s.value, s.owner)
+        }
+    )
 
     constructor(value: number, owner: string) {
         super()
@@ -24,7 +27,7 @@ export class OptimisticLockableStore extends Store {
         this.history = new History(this.state.getState(), (presence) => this.state.setState(presence))
     }
 
-    setSliderLock: Request<[string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
+    setSliderLock: Request<this, [string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
         if (origin != null) {
             if (Math.random() > 0.5) {
                 this.history.next(({ value }) => ({
@@ -37,7 +40,7 @@ export class OptimisticLockableStore extends Store {
             return of(false)
         } else {
             const resolve = this.history.maybeNext(({ value }) => ({ owner, value }))
-            return this.setSliderLock.publishTo(this.links[0], owner).pipe(tap((keep) => resolve(keep)))
+            return this.setSliderLock.publishTo(this.mainLink, owner).pipe(tap((keep) => resolve(keep)))
         }
     })
 

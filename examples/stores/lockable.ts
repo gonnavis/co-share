@@ -1,5 +1,5 @@
-import { Action, Connection, Request, Store, StoreLink, Subscriber } from "co-share"
-import { Observable, of } from "rxjs"
+import { Action, Request, Store, StoreLink, Subscriber } from "co-share"
+import { of } from "rxjs"
 import { delay, tap } from "rxjs/operators"
 import create, { StoreApi } from "zustand/vanilla"
 
@@ -10,10 +10,13 @@ export class LockableStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(LockableStore, (connection, accept, deny) => {
-        const s = this.state.getState()
-        accept(s.value, s.owner)
-    })
+    public subscriber: Subscriber<LockableStore, [number, string]> = Subscriber.create(
+        LockableStore,
+        (connection, accept, deny) => {
+            const s = this.state.getState()
+            accept(s.value, s.owner)
+        }
+    )
 
     constructor(value: number, owner: string) {
         super()
@@ -31,8 +34,8 @@ export class LockableStore extends Store {
         this.setSlider.publishTo(origin == null ? { to: "all" } : { to: "all-except-one", except: origin }, by, value)
     })
 
-    setSliderLock: Request<[string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
-        return (origin == null ? this.setSliderLock.publishTo(this.links[0], owner) : of(true).pipe(delay(1000))).pipe(
+    setSliderLock: Request<this, [string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
+        return (origin == null ? this.setSliderLock.publishTo(this.mainLink, owner) : of(true).pipe(delay(1000))).pipe(
             tap((approved) => {
                 if (approved) {
                     this.forceSliderLock(owner)

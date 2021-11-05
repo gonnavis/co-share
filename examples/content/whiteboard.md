@@ -106,7 +106,6 @@ export function Whiteboard({ store }: { store: WhiteboardStore }) {
                     x1: x,
                     y1: y,
                 })
-                console.log(event.clientX)
                 lastPointerPosition.current.x = x
                 lastPointerPosition.current.y = y
             }

@@ -1,5 +1,5 @@
-import { Store } from "co-share"
-import { useChildStore } from "co-share/react"
+import { RootStore } from "co-share"
+import { useStoreSubscription } from "co-share/react"
 import React, { useEffect, useRef, useState } from "react"
 import { useCallback } from "react"
 import { Observable } from "rxjs"
@@ -16,7 +16,7 @@ export default function Index() {
             <Header selectedIndex={1} />
             <div className="d-flex flex-column justify-content-stretch container-lg">
                 <div className="d-flex flex-row-responsive">
-                    <Simulator initStore={(rootStore) => rootStore.addChildStore(new RequestStore(), false, "request")}>
+                    <Simulator initStores={(rootStore) => rootStore.addStore(new RequestStore(), "request")}>
                         {(rootStore) => <RequestExamplePage rootStore={rootStore} />}
                     </Simulator>
                 </div>
@@ -29,8 +29,8 @@ export default function Index() {
     )
 }
 
-export function RequestExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], RequestStore, 1000, "request")
+export function RequestExamplePage({ rootStore }: { rootStore: RootStore }) {
+    const store = useStoreSubscription("request", 1000, () => new RequestStore(), undefined, rootStore)
 
     const [requests, setRequests] = useState<Array<{ v1: number; v2: number }>>([])
 
@@ -83,7 +83,7 @@ export function Request({
     v1: number
     v2: number
     addRequest: (v1: number, v2: number) => Observable<number>
-}) {
+}): JSX.Element {
     const [result, setResult] = useState<string>("loading ...")
     useEffect(() => {
         const subscription = addRequest(v1, v2)

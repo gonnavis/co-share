@@ -1,4 +1,4 @@
-import { filterNull, LogAction, Store, StoreLink } from "."
+import { LogAction, Store, StoreLink } from "."
 
 export type ActionIdentifier = string | number
 
@@ -62,19 +62,13 @@ function bindAction<S extends Store, T extends Array<any>>(
     const action: Action<S, T> = Object.assign(execute.bind(store, undefined), {
         forwardFrom: forwardFrom.bind(undefined, store),
         publishTo: (targetDescription: PublishActionTargetDescription, ...params: T) => {
-            const targets = convertActionTargetDescriptionToTargets(
-                targetDescription,
-                store.storeLinkCache
-                    .findByPath(store.path)
-                    .map((entry) => entry.get())
-                    .filter(filterNull)
-            )
+            const targets = convertActionTargetDescriptionToTargets(targetDescription, Array.from(store.linkSet))
             publishTo(targets, ...params)
         },
         identifier,
     })
     if (overwrite || !store.actionMap.has(identifier)) {
-        store.actionMap.set(identifier, action as Action<S, Array<any>>)
+        store.actionMap.set(identifier, action as Action<Store, Array<any>>)
     } else {
         throw `Action "${identifier}" already exists on store (${store}). If you want to overwrite the action, set the overwrite parameter to true.`
     }

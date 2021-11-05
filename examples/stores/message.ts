@@ -4,10 +4,13 @@ import create, { StoreApi } from "zustand/vanilla"
 export class MessagesStore extends Store {
     public state: StoreApi<{ clients: Array<string>; messages: Array<{ senderId: string; message: string }> }>
 
-    public subscriber: Subscriber = Subscriber.create(MessagesStore, (connection, accept, deny) => {
-        this.addClient(connection.userData.id)
-        accept(this.state.getState().clients.filter((id) => id != connection.userData.id))
-    })
+    public subscriber: Subscriber<MessagesStore, [Array<string>]> = Subscriber.create(
+        MessagesStore,
+        (connection, accept, deny) => {
+            this.addClient(connection.userData.id)
+            accept(this.state.getState().clients.filter((id) => id != connection.userData.id))
+        }
+    )
 
     public sendMessage = Action.create(
         this,
@@ -15,9 +18,9 @@ export class MessagesStore extends Store {
         (origin, senderId: string, receiverId: string, message: string) => {
             //the following routing algorithm assumes a star topology
             if (origin == null) {
-                this.sendMessage.publishTo({ to: "one", one: this.links[0] }, senderId, receiverId, message)
+                this.sendMessage.publishTo({ to: "one", one: this.mainLink }, senderId, receiverId, message)
             } else if (origin.connection.userData.id === senderId) {
-                const link = this.links.find((link) => link.connection.userData.id === receiverId)
+                const link = Array.from(this.linkSet).find((link) => link.connection.userData.id === receiverId)
                 if (link == null) {
                     throw `unable to find connection with receiver id ${receiverId}`
                 }
@@ -32,12 +35,13 @@ export class MessagesStore extends Store {
 
     constructor(clients: Array<string>) {
         super()
-        this.state = create<{ clients: Array<string>; messages: Array<{ senderId: string; message: string }> }>(
-            () => ({ messages: [], clients })
-        )
+        this.state = create<{ clients: Array<string>; messages: Array<{ senderId: string; message: string }> }>(() => ({
+            messages: [],
+            clients,
+        }))
     }
 
-    public onLink(link: StoreLink): void { }
+    public onLink(link: StoreLink): void {}
 
     private addClient = Action.create(this, "addClient", (origin, clientInfo: string) => {
         this.state.setState({

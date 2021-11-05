@@ -1,4 +1,4 @@
-import { Action, isBrowser, Request, Store, StoreLink, Subscriber } from "co-share"
+import { Action, isBrowser, Request, RootStore, Store, StoreLink, Subscriber } from "co-share"
 import { StoreApi } from "zustand"
 import create from "zustand/vanilla"
 import { v4 as uuid } from "uuid"
@@ -8,29 +8,30 @@ import { tap } from "rxjs/operators"
 export type Group = { id: string; name: string }
 
 export class GroupChatListStore extends Store {
-    public subscriber: Subscriber = Subscriber.create(GroupChatListStore, (connection, accept) =>
-        accept(this.state.getState().groups)
+    public subscriber: Subscriber<GroupChatListStore, [Array<Group>]> = Subscriber.create(
+        GroupChatListStore,
+        (connection, accept) => accept(this.state.getState().groups)
     )
     public state: StoreApi<{ groups: Array<Group> }>
 
-    constructor(groups: Array<Group>) {
+    constructor(public readonly rootStore: RootStore, groups: Array<Group>) {
         super()
         this.state = create(() => ({ groups }))
     }
 
-    public createGroup: Request<[name: string], string> = Request.create(
+    public createGroup: Request<this, [name: string], string> = Request.create(
         this,
         "createGroup",
         (origin, name: string) => {
             if (origin != null) {
                 const id = uuid()
                 const groupStore = new GroupChatStore([], undefined)
-                this.addChildStore(groupStore, false, id)
+                this.rootStore.addStore(groupStore, id)
                 this.addGroup(id, name)
                 this.addGroup.publishTo({ to: "all-except-one", except: origin }, id, name)
                 return of(id)
             } else {
-                return this.createGroup.publishTo(this.links[0], name).pipe(tap((id) => this.addGroup(id, name)))
+                return this.createGroup.publishTo(this.mainLink, name).pipe(tap((id) => this.addGroup(id, name)))
             }
         }
     )
@@ -45,10 +46,10 @@ export class GroupChatListStore extends Store {
         this.state.setState({
             groups: this.state.getState().groups.filter((group) => group.id !== id),
         })
-        const store = this.childStoreMap.get(id)
-        if (origin != null && store != null) {
-            store.close()
-            this.removeChildStore(id)
+        const store = this.rootStore.storeMap.get(id)
+        if (origin != null && store != null && store instanceof GroupChatStore && store.ownId == null) {
+            //workarround to now if we are on the server
+            this.rootStore.destroyStore(store, id)
         }
         this.deleteGroup.publishTo(origin == null ? { to: "all" } : { to: "all-except-one", except: origin }, id)
     })
@@ -70,12 +71,13 @@ export type Message = {
 }
 
 export class GroupChatStore extends Store {
-    public subscriber: Subscriber = Subscriber.create(GroupChatStore, (connection, accept) =>
-        accept(this.state.getState().messages, connection.userData.id)
-    )
+    public subscriber: Subscriber<GroupChatStore, [messages: Array<Message>, ownId: string | undefined]> =
+        Subscriber.create(GroupChatStore, (connection, accept) =>
+            accept(this.state.getState().messages, connection.userData.id)
+        )
     public state: StoreApi<{ messages: Array<Message> }>
 
-    constructor(messages: Array<Message>, private readonly ownId: string | undefined) {
+    constructor(messages: Array<Message>, public readonly ownId: string | undefined) {
         super()
         this.state = create(() => ({ messages }))
     }

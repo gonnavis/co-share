@@ -1,6 +1,6 @@
 import { Line, WhiteboardStore } from "../stores/whiteboard"
-import { useChildStore } from "co-share/react"
-import { Store } from "co-share"
+import { useStoreSubscription } from "co-share/react"
+import { RootStore } from "co-share"
 import React, { useCallback, useEffect, useMemo, useRef, useState, PointerEvent } from "react"
 import { tap } from "rxjs/operators"
 import { Simulator } from "../components/simulator"
@@ -16,9 +16,7 @@ export default function Index() {
                 <div className="d-flex flex-row-responsive">
                     <Simulator
                         twoClients
-                        initStore={(rootStore) =>
-                            rootStore.addChildStore(new WhiteboardStore([]), false, "whiteboard")
-                        }>
+                        initStores={(rootStore) => rootStore.addStore(new WhiteboardStore([]), "whiteboard")}>
                         {(rootStore) => <WhiteboardExamplePage rootStore={rootStore} />}
                     </Simulator>
                 </div>
@@ -26,13 +24,19 @@ export default function Index() {
                     <MD />
                 </div>
             </div>
-            <Footer/>
+            <Footer />
         </div>
     )
 }
 
-export function WhiteboardExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], WhiteboardStore, 1000, "whiteboard")
+export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }) {
+    const store = useStoreSubscription(
+        "whiteboard",
+        1000,
+        (lines: Array<Line>) => new WhiteboardStore(lines),
+        undefined,
+        rootStore
+    )
     return <Whiteboard store={store} />
 }
 
@@ -102,7 +106,6 @@ export function Whiteboard({ store }: { store: WhiteboardStore }) {
                     x1: x,
                     y1: y,
                 })
-                console.log(event.clientX)
                 lastPointerPosition.current.x = x
                 lastPointerPosition.current.y = y
             }

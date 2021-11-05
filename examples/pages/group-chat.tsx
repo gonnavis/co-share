@@ -1,12 +1,12 @@
-import React, { useMemo, useRef, useState } from "react"
-import { useChildStore } from "co-share/react"
-import { Store } from "co-share"
-import { GroupChatListStore, GroupChatStore } from "../stores/group-chat"
+import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { RootStore } from "co-share"
+import { Group, GroupChatListStore, GroupChatStore, Message } from "../stores/group-chat"
 import create from "zustand"
 import { Simulator } from "../components/simulator"
 import { Header } from "../components/header"
 import MD from "../content/group-chat.md"
 import { Footer } from "../components/footer"
+import { useStoreSubscription } from "co-share/react"
 
 export default function Index() {
     return (
@@ -15,9 +15,8 @@ export default function Index() {
             <div className="d-flex flex-column justify-content-stretch container-lg">
                 <div className="d-flex flex-row-responsive">
                     <Simulator
-                        twoClients
-                        initStore={(rootStore) =>
-                            rootStore.addChildStore(new GroupChatListStore([]), false, "group-chat-list")
+                        initStores={(rootStore) =>
+                            rootStore.addStore(new GroupChatListStore(rootStore, []), "group-chat-list")
                         }>
                         {(rootStore) => <GroupChatExamplePage rootStore={rootStore} />}
                     </Simulator>
@@ -31,13 +30,25 @@ export default function Index() {
     )
 }
 
-export function GroupChatExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], GroupChatListStore, 1000, "group-chat-list")
+export function GroupChatExamplePage({ rootStore }: { rootStore: RootStore }) {
+    const store = useStoreSubscription(
+        "group-chat-list",
+        1000,
+        (groups: Array<Group>) => new GroupChatListStore(rootStore, groups),
+        undefined,
+        rootStore
+    )
 
     const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(undefined)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                groups: Group[]
+            }>(store.state),
+        [store]
+    )
 
     const { groups } = useStoreState()
     const groupId = useMemo(
@@ -58,7 +69,8 @@ export function GroupChatExamplePage({ rootStore }: { rootStore: Store }) {
                 alignItems: "stretch",
                 justifyContent: "stretch",
                 flexGrow: 1,
-            }} className="p-3">
+            }}
+            className="p-3">
             <div style={{ maxWidth: 300, width: "100%" }}>
                 <h1>Groups</h1>
                 <div className="input-group mb-3">
@@ -83,8 +95,12 @@ export function GroupChatExamplePage({ rootStore }: { rootStore: Store }) {
                     </div>
                 </div>
                 {groups.map((group) => (
-                    <div key={group.id} style={{ cursor: "pointer" }} onClick={() => setSelectedGroupId(group.id)}>
-                        {group.name}
+                    <div
+                        className="d-flex align-items-center justify-content-between"
+                        key={group.id}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setSelectedGroupId(group.id)}>
+                        <span className={groupId === group.id ? "fw-bold" : ""}>{group.name}</span>
                         <button className="btn btn-outline-danger" onClick={() => store.deleteGroup(group.id)}>
                             Delete
                         </button>
@@ -97,20 +113,30 @@ export function GroupChatExamplePage({ rootStore }: { rootStore: Store }) {
                         Create a Group
                     </div>
                 ) : (
-                    <GroupChat groupId={groupId} store={store} />
+                    <Suspense fallback={<span>Loading ...</span>}>
+                        <GroupChat groupId={groupId} rootStore={rootStore} />
+                    </Suspense>
                 )}
             </div>
         </div>
     )
 }
 
-function GroupChat({ store, groupId }: { groupId: string; store: GroupChatListStore }) {
-    const groupChatStore = useChildStore(store, store.links[0], GroupChatStore, 1000, groupId)
-    const useStoreState = useMemo(() => create(groupChatStore.state), [store])
+function GroupChat({ rootStore, groupId }: { groupId: string; rootStore: RootStore }) {
+    const groupChatStore = useStoreSubscription(
+        groupId,
+        1000,
+        (messages: Array<Message>, ownId: string | undefined) => new GroupChatStore(messages, ownId),
+        undefined,
+        rootStore
+    )
+
+    //buggy: guess: suspense will not unmount this component and thus the api is not resubscribed
+    const useStoreState = useMemo(() => create<{ messages: Message[] }>(groupChatStore.state), [groupChatStore])
+    const { messages } = useStoreState()
 
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const { messages } = useStoreState()
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
             {messages.map((message, index) => (

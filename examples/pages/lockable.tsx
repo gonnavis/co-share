@@ -1,5 +1,5 @@
-import { Store } from "co-share"
-import { useChildStore } from "co-share/react"
+import { RootStore } from "co-share"
+import { useStoreSubscription } from "co-share/react"
 import React, { useMemo, useRef } from "react"
 import create from "zustand"
 import { Header } from "../components/header"
@@ -16,9 +16,7 @@ export default function Index() {
                 <div className="d-flex flex-row-responsive">
                     <Simulator
                         twoClients
-                        initStore={(rootStore) =>
-                            rootStore.addChildStore(new LockableStore(0, "none"), false, "lockable")
-                        }>
+                        initStores={(rootStore) => rootStore.addStore(new LockableStore(0, "none"), "lockable")}>
                         {(rootStore) => <LockableExamplePage rootStore={rootStore} />}
                     </Simulator>
                 </div>
@@ -31,10 +29,16 @@ export default function Index() {
     )
 }
 
-export function LockableExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], LockableStore, 1000, "lockable")
+export function LockableExamplePage({ rootStore }: { rootStore: RootStore }) {
+    const store = useStoreSubscription(
+        "lockable",
+        1000,
+        (value: number, owner: string) => new LockableStore(value, owner),
+        undefined,
+        rootStore
+    )
 
-    const id = useMemo(() => rootStore.links[0].connection.userData.id, [rootStore])
+    const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
     const inputRef = useRef<HTMLInputElement>(null)
 
     const useStoreState = useMemo(() => create(store.state), [store])
