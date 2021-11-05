@@ -1,10 +1,8 @@
-# Lockable Example
+**for demonstration purposes the lock request has a delay of 1 second**
 
-In multiuser applications it is really important to manage the rights of a user to change something.  
-What should happen if two clients alter the same slider?  
-With this Lockable approach, you can solve this problem easily!
+# Lockable Example Source Code
 
-Let's see how it works ...
+[`lockable.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/lockable.ts)
 
 ```typescript
 export class LockableStore extends Store {
@@ -14,10 +12,13 @@ export class LockableStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(LockableStore, (connection, accept, deny) => {
-        const s = this.state.getState()
-        accept(s.value, s.owner)
-    })
+    public subscriber: Subscriber<LockableStore, [number, string]> = Subscriber.create(
+        LockableStore,
+        (connection, accept, deny) => {
+            const s = this.state.getState()
+            accept(s.value, s.owner)
+        }
+    )
 
     constructor(value: number, owner: string) {
         super()
@@ -35,8 +36,8 @@ export class LockableStore extends Store {
         this.setSlider.publishTo(origin == null ? { to: "all" } : { to: "all-except-one", except: origin }, by, value)
     })
 
-    setSliderLock: Request<[string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
-        return (origin == null ? this.setSliderLock.publishTo(this.links[0], owner) : of(true).pipe(delay(1000))).pipe(
+    setSliderLock: Request<this, [string], boolean> = Request.create(this, "setSliderLock", (origin, owner: string) => {
+        return (origin == null ? this.setSliderLock.publishTo(this.mainLink, owner) : of(true).pipe(delay(1000))).pipe(
             tap((approved) => {
                 if (approved) {
                     this.forceSliderLock(owner)
@@ -56,19 +57,34 @@ export class LockableStore extends Store {
 }
 ```
 
-```typescript
-export function LockableExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], LockableStore, 1000, "lockable")
+[`lockable.tsx`](https://github.com/cocoss-org/co-share/blob/master/examples/pages/lockable.tsx)
 
-    const id = useMemo(() => rootStore.links[0].connection.userData.id, [rootStore])
+```typescript
+export function LockableExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
+    const store = useStoreSubscription(
+        "lockable",
+        1000,
+        (value: number, owner: string) => new LockableStore(value, owner),
+        undefined,
+        rootStore
+    )
+
+    const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                value: number
+                owner: string
+            }>(store.state),
+        [store]
+    )
 
     const { owner, value } = useStoreState()
 
     return (
-        <div>
+        <div className="p-3">
             <button className="btn btn-outline-primary" onClick={() => store.setSliderLock(id).subscribe()}>
                 lock
             </button>

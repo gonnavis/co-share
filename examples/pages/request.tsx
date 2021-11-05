@@ -10,7 +10,7 @@ import { RequestStore } from "../stores/request"
 import MD from "../content/request.md"
 import { Footer } from "../components/footer"
 
-export default function Index() {
+export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
             <Header selectedIndex={1} />
@@ -29,7 +29,7 @@ export default function Index() {
     )
 }
 
-export function RequestExamplePage({ rootStore }: { rootStore: RootStore }) {
+export function RequestExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
     const store = useStoreSubscription("request", 1000, () => new RequestStore(), undefined, rootStore)
 
     const [requests, setRequests] = useState<Array<{ v1: number; v2: number }>>([])

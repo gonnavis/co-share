@@ -1,6 +1,7 @@
-# Whiteboard Example
+# Whiteboard Example Source Code
 
-Let's see how it works ...
+
+[`whiteboard.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/whiteboard.ts)
 
 ```typescript
 export type Line = {
@@ -19,7 +20,10 @@ export class WhiteboardStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(WhiteboardStore, (connection, accept, deny) => accept(this.lines))
+    public subscriber: Subscriber<WhiteboardStore, [Array<Line>]> = Subscriber.create(
+        WhiteboardStore,
+        (connection, accept, deny) => accept(this.lines)
+    )
 
     constructor(lines: Array<Line>) {
         super()
@@ -34,24 +38,17 @@ export class WhiteboardStore extends Store {
 }
 ```
 
+[`whiteboard.tsx`](https://github.com/cocoss-org/co-share/blob/master/examples/pages/whiteboard.tsx)
+
 ```typescript
-export function WhiteboardExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], WhiteboardStore, 1000, "whiteboard")
-    return <Whiteboard store={store} />
-}
-
-function getXYFromPointerEvent(e: PointerEvent): { x: number; y: number } {
-    if (e.target instanceof HTMLElement) {
-        const rect = e.target.getBoundingClientRect()
-        return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-        }
-    }
-    return { x: 0, y: 0 }
-}
-
-export function Whiteboard({ store }: { store: WhiteboardStore }) {
+export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
+    const store = useStoreSubscription(
+        "whiteboard",
+        1000,
+        (lines: Array<Line>) => new WhiteboardStore(lines),
+        undefined,
+        rootStore
+    )
     const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null)
 
     const context = useMemo(() => canvas?.getContext("2d"), [canvas])
@@ -128,5 +125,16 @@ export function Whiteboard({ store }: { store: WhiteboardStore }) {
             onPointerUp={onPointerUp}
         />
     )
+}
+
+function getXYFromPointerEvent(e: PointerEvent): { x: number; y: number } {
+    if (e.target instanceof HTMLElement) {
+        const rect = e.target.getBoundingClientRect()
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+        }
+    }
+    return { x: 0, y: 0 }
 }
 ```

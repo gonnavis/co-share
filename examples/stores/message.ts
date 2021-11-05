@@ -1,4 +1,4 @@
-import { Action, isBrowser, Store, StoreLink, Subscriber } from "co-share"
+import { Action, Store, StoreLink, Subscriber } from "co-share"
 import create, { StoreApi } from "zustand/vanilla"
 
 export class MessagesStore extends Store {

@@ -8,7 +8,7 @@ import { Header } from "../components/header"
 import MD from "../content/message.md"
 import { Footer } from "../components/footer"
 
-export default function Index() {
+export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
             <Header selectedIndex={2} />
@@ -29,7 +29,7 @@ export default function Index() {
     )
 }
 
-export function MessagesSamplePage({ rootStore }: { rootStore: RootStore }) {
+export function MessagesSamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
     const store = useStoreSubscription(
         "messages",
         1000,
@@ -39,7 +39,17 @@ export function MessagesSamplePage({ rootStore }: { rootStore: RootStore }) {
     )
 
     const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                clients: string[]
+                messages: {
+                    senderId: string
+                    message: string
+                }[]
+            }>(store.state),
+        [store]
+    )
 
     const messages = useStoreState((store) => store.messages)
     const clients = useStoreState((store) => store.clients)
@@ -68,7 +78,7 @@ export function Client({
 }: {
     client: string
     sendMessage: (receiverId: string, message: string) => void
-}) {
+}): JSX.Element {
     const inputRef = useRef<HTMLInputElement>(null)
     return (
         <div>

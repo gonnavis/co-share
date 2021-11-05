@@ -1,34 +1,35 @@
-# Group Chat Example
+# Group Chat Example Source Code
 
-Let's see how it works ...
+[`group-chat.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/group-chat.ts)
 
 ```typescript
 export type Group = { id: string; name: string }
 
 export class GroupChatListStore extends Store {
-    public subscriber: Subscriber = Subscriber.create(GroupChatListStore, (connection, accept) =>
-        accept(this.state.getState().groups)
+    public subscriber: Subscriber<GroupChatListStore, [Array<Group>]> = Subscriber.create(
+        GroupChatListStore,
+        (connection, accept) => accept(this.state.getState().groups)
     )
     public state: StoreApi<{ groups: Array<Group> }>
 
-    constructor(groups: Array<Group>) {
+    constructor(public readonly rootStore: RootStore, groups: Array<Group>) {
         super()
         this.state = create(() => ({ groups }))
     }
 
-    public createGroup: Request<[name: string], string> = Request.create(
+    public createGroup: Request<this, [name: string], string> = Request.create(
         this,
         "createGroup",
         (origin, name: string) => {
             if (origin != null) {
                 const id = uuid()
                 const groupStore = new GroupChatStore([], undefined)
-                this.addChildStore(groupStore, false, id)
+                this.rootStore.addStore(groupStore, id)
                 this.addGroup(id, name)
                 this.addGroup.publishTo({ to: "all-except-one", except: origin }, id, name)
                 return of(id)
             } else {
-                return this.createGroup.publishTo(this.links[0], name).pipe(tap((id) => this.addGroup(id, name)))
+                return this.createGroup.publishTo(this.mainLink, name).pipe(tap((id) => this.addGroup(id, name)))
             }
         }
     )
@@ -43,10 +44,10 @@ export class GroupChatListStore extends Store {
         this.state.setState({
             groups: this.state.getState().groups.filter((group) => group.id !== id),
         })
-        const store = this.childStoreMap.get(id)
-        if (origin != null && store != null) {
-            store.close()
-            this.removeChildStore(id)
+        const store = this.rootStore.storeMap.get(id)
+        if (origin != null && store != null && store instanceof GroupChatStore && store.ownId == null) {
+            //workarround to now if we are on the server
+            this.rootStore.destroyStore(store, id)
         }
         this.deleteGroup.publishTo(origin == null ? { to: "all" } : { to: "all-except-one", except: origin }, id)
     })
@@ -68,12 +69,13 @@ export type Message = {
 }
 
 export class GroupChatStore extends Store {
-    public subscriber: Subscriber = Subscriber.create(GroupChatStore, (connection, accept) =>
-        accept(this.state.getState().messages, connection.userData.id)
-    )
+    public subscriber: Subscriber<GroupChatStore, [messages: Array<Message>, ownId: string | undefined]> =
+        Subscriber.create(GroupChatStore, (connection, accept) =>
+            accept(this.state.getState().messages, connection.userData.id)
+        )
     public state: StoreApi<{ messages: Array<Message> }>
 
-    constructor(messages: Array<Message>, private readonly ownId: string | undefined) {
+    constructor(messages: Array<Message>, public readonly ownId: string | undefined) {
         super()
         this.state = create(() => ({ messages }))
     }
@@ -115,14 +117,29 @@ export class GroupChatStore extends Store {
 }
 ```
 
+
+[`group-chat.tsx`](https://github.com/cocoss-org/co-share/blob/master/examples/pages/group-chat.tsx)
+
 ```typescript
-export function GroupChatExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], GroupChatListStore, 1000, "group-chat-list")
+export function GroupChatExamplePage({ rootStore }: { rootStore: RootStore }) {
+    const store = useStoreSubscription(
+        "group-chat-list",
+        1000,
+        (groups: Array<Group>) => new GroupChatListStore(rootStore, groups),
+        undefined,
+        rootStore
+    )
 
     const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(undefined)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                groups: Group[]
+            }>(store.state),
+        [store]
+    )
 
     const { groups } = useStoreState()
     const groupId = useMemo(
@@ -143,7 +160,8 @@ export function GroupChatExamplePage({ rootStore }: { rootStore: Store }) {
                 alignItems: "stretch",
                 justifyContent: "stretch",
                 flexGrow: 1,
-            }}>
+            }}
+            className="p-3">
             <div style={{ maxWidth: 300, width: "100%" }}>
                 <h1>Groups</h1>
                 <div className="input-group mb-3">
@@ -168,8 +186,12 @@ export function GroupChatExamplePage({ rootStore }: { rootStore: Store }) {
                     </div>
                 </div>
                 {groups.map((group) => (
-                    <div key={group.id} style={{ cursor: "pointer" }} onClick={() => setSelectedGroupId(group.id)}>
-                        {group.name}
+                    <div
+                        className="d-flex align-items-center justify-content-between"
+                        key={group.id}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setSelectedGroupId(group.id)}>
+                        <span className={groupId === group.id ? "fw-bold" : ""}>{group.name}</span>
                         <button className="btn btn-outline-danger" onClick={() => store.deleteGroup(group.id)}>
                             Delete
                         </button>
@@ -182,20 +204,30 @@ export function GroupChatExamplePage({ rootStore }: { rootStore: Store }) {
                         Create a Group
                     </div>
                 ) : (
-                    <GroupChat groupId={groupId} store={store} />
+                    <Suspense fallback={<span>Loading ...</span>}>
+                        <GroupChat groupId={groupId} rootStore={rootStore} />
+                    </Suspense>
                 )}
             </div>
         </div>
     )
 }
 
-function GroupChat({ store, groupId }: { groupId: string; store: GroupChatListStore }) {
-    const groupChatStore = useChildStore(store, store.links[0], GroupChatStore, 1000, groupId)
-    const useStoreState = useMemo(() => create(groupChatStore.state), [store])
+function GroupChat({ rootStore, groupId }: { groupId: string; rootStore: RootStore }) {
+    const groupChatStore = useStoreSubscription(
+        groupId,
+        1000,
+        (messages: Array<Message>, ownId: string | undefined) => new GroupChatStore(messages, ownId),
+        undefined,
+        rootStore
+    )
+
+    //buggy: guess: suspense will not unmount this component and thus the api is not resubscribed
+    const useStoreState = useMemo(() => create<{ messages: Message[] }>(groupChatStore.state), [groupChatStore])
+    const { messages } = useStoreState()
 
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const { messages } = useStoreState()
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
             {messages.map((message, index) => (

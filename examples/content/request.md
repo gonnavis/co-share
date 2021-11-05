@@ -1,6 +1,8 @@
-# Request Example
+**for demonstration purposes there is a 50% change of failing when requesting a calculation**
 
-Let's see how it works ...
+# Request Example Source Code
+
+[`request.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/request.ts)
 
 ```typescript
 export class RequestStore extends Store {
@@ -8,20 +10,24 @@ export class RequestStore extends Store {
 
     public onLink(link: StoreLink): void {}
 
-    public subscriber: Subscriber = Subscriber.create(RequestStore, (connection, accept, deny) => accept())
+    public subscriber: Subscriber<RequestStore, []> = Subscriber.create(RequestStore, (connection, accept, deny) =>
+        accept()
+    )
 
-    add: Request<[number, number], number> = Request.create(this, "add", (origin, v1: number, v2: number) => {
+    add: Request<this, [number, number], number> = Request.create(this, "add", (origin, v1: number, v2: number) => {
         if (origin == null) {
-            return this.add.publishTo(this.links[0], v1, v2)
+            return this.add.publishTo(this.mainLink, v1, v2)
         }
         return Math.random() > 0.5 ? NEVER : of(v1 + v2)
     })
 }
 ```
 
+[`request.tsx`](https://github.com/cocoss-org/co-share/blob/master/examples/pages/request.tsx)
+
 ```typescript
-export function RequestExamplePage({ rootStore }: { rootStore: Store }) {
-    const store = useChildStore(rootStore, rootStore.links[0], RequestStore, 1000, "request")
+export function RequestExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
+    const store = useStoreSubscription("request", 1000, () => new RequestStore(), undefined, rootStore)
 
     const [requests, setRequests] = useState<Array<{ v1: number; v2: number }>>([])
 
@@ -38,7 +44,7 @@ export function RequestExamplePage({ rootStore }: { rootStore: Store }) {
 
     return (
         <>
-            <div className="input-group mb-3">
+            <div className="p-3 input-group">
                 <input
                     type="number"
                     ref={v1Ref}
@@ -74,7 +80,7 @@ export function Request({
     v1: number
     v2: number
     addRequest: (v1: number, v2: number) => Observable<number>
-}) {
+}): JSX.Element {
     const [result, setResult] = useState<string>("loading ...")
     useEffect(() => {
         const subscription = addRequest(v1, v2)

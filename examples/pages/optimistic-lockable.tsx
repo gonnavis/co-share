@@ -7,9 +7,8 @@ import { Simulator } from "../components/simulator"
 import { OptimisticLockableStore } from "../stores/optimistic-lockable"
 import MD from "../content/optimistic-lockable.md"
 import { Footer } from "../components/footer"
-import { LockableStore } from "../stores/lockable"
 
-export default function Index() {
+export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
             <Header selectedIndex={5} />
@@ -32,7 +31,7 @@ export default function Index() {
     )
 }
 
-export function OptimisticLockableExamplePage({ rootStore }: { rootStore: RootStore }) {
+export function OptimisticLockableExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
     const store = useStoreSubscription(
         "optimistic-lockable",
         1000,
@@ -45,7 +44,14 @@ export function OptimisticLockableExamplePage({ rootStore }: { rootStore: RootSt
 
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                value: number
+                owner: string
+            }>(store.state),
+        [store]
+    )
 
     const { owner, value } = useStoreState()
 

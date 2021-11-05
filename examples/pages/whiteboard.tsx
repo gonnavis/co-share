@@ -8,7 +8,7 @@ import { Header } from "../components/header"
 import MD from "../content/whiteboard.md"
 import { Footer } from "../components/footer"
 
-export default function Index() {
+export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
             <Header selectedIndex={6} />
@@ -29,7 +29,7 @@ export default function Index() {
     )
 }
 
-export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }) {
+export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
     const store = useStoreSubscription(
         "whiteboard",
         1000,
@@ -37,21 +37,6 @@ export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }) {
         undefined,
         rootStore
     )
-    return <Whiteboard store={store} />
-}
-
-function getXYFromPointerEvent(e: PointerEvent): { x: number; y: number } {
-    if (e.target instanceof HTMLElement) {
-        const rect = e.target.getBoundingClientRect()
-        return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-        }
-    }
-    return { x: 0, y: 0 }
-}
-
-export function Whiteboard({ store }: { store: WhiteboardStore }) {
     const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null)
 
     const context = useMemo(() => canvas?.getContext("2d"), [canvas])
@@ -128,4 +113,15 @@ export function Whiteboard({ store }: { store: WhiteboardStore }) {
             onPointerUp={onPointerUp}
         />
     )
+}
+
+function getXYFromPointerEvent(e: PointerEvent): { x: number; y: number } {
+    if (e.target instanceof HTMLElement) {
+        const rect = e.target.getBoundingClientRect()
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+        }
+    }
+    return { x: 0, y: 0 }
 }

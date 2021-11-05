@@ -30,8 +30,20 @@ export default function Index() {
 }
 
 function CounterExamplePage({ rootStore }: { rootStore: RootStore }) {
-    const store = useStoreSubscription("counter", 1000, (value: number) => new CounterStore(value), undefined, rootStore)
-    const useStoreState = useMemo(() => create(store.state), [store])
+    const store = useStoreSubscription(
+        "counter",
+        1000,
+        (value: number) => new CounterStore(value),
+        undefined,
+        rootStore
+    )
+    const useStoreState = useMemo(
+        () =>
+            create<{
+                counter: number
+            }>(store.state),
+        [store]
+    )
 
     const { counter } = useStoreState()
 

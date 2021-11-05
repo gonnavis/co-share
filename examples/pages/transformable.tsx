@@ -10,7 +10,7 @@ import { Header } from "../components/header"
 import MD from "../content/transformable.md"
 import { Footer } from "../components/footer"
 
-export default function Index() {
+export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
             <Header selectedIndex={7} />
@@ -60,7 +60,7 @@ export function useSyncTransformable(
     return { ownerRef }
 }
 
-export function TransformableExamplePage({ rootStore }: { rootStore: RootStore }) {
+export function TransformableExamplePage({ rootStore }: { rootStore: RootStore }): JSX.Element {
     const store = useStoreSubscription(
         "transformable",
         1000,
@@ -80,7 +80,7 @@ export function TransformableExamplePage({ rootStore }: { rootStore: RootStore }
     )
 }
 
-export function Block({ store, id }: { store: TransformableStore; id: string }) {
+export function Block({ store, id }: { store: TransformableStore; id: string }): JSX.Element {
     const grabbedRef = useRef(false)
     const helperArray = useMemo<Array<number>>(() => [], [])
 

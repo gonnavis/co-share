@@ -1,4 +1,4 @@
-import { Store, Action, StoreLink, Subscriber, PathEntry, StoreMap } from "co-share"
+import { Store, Action, StoreLink, Subscriber } from "co-share"
 import { StoreApi } from "zustand"
 import create from "zustand/vanilla"
 
