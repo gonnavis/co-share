@@ -16,7 +16,9 @@ export type SubscriberFn<Params extends Array<any>> = (
     deny: (reason: string) => void
 ) => void
 
-export type SubscriberGetParams<S extends Subscriber<Store, Array<any>>> = S extends Subscriber<Store, infer T> ? T : never
+export type SubscriberGetParams<S extends Subscriber<Store, Array<any>>> = S extends Subscriber<Store, infer T>
+    ? T
+    : never
 
 export type Subscriber<S extends Store, Params extends Array<any>> = SubscriberFn<Params> & {
     storeClass: { new (...params: Array<any>): S }
