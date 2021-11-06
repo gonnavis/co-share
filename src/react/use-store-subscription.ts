@@ -37,7 +37,14 @@ export function useStoreSubscription<S extends Store>(
             if (ref.referenceCount === 0) {
                 UnsubscribeAction.publishTo([ref.storeLink])
                 providedRootStore.destroyStore(ref.store, path)
-                clear([retryAfter, path, providedRootStore, rootStoreLink, ...(factoryDepends ?? []), useStoreSubscriptionSymbol])
+                clear([
+                    retryAfter,
+                    path,
+                    providedRootStore,
+                    rootStoreLink,
+                    ...(factoryDepends ?? []),
+                    useStoreSubscriptionSymbol,
+                ])
             }
         }
     }, [ref])
