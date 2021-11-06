@@ -221,5 +221,5 @@ function CounterExamplePage() {
 
 - That was easy, show me something more complex? Check out the other **Examples**. We always provide the code below. They increase in complexity.
 - Have something to complain or correct? **write an issue or an PR**
-- See the complete code for a *real* **networked** version of the counter using `socketio`? Check out the [co-share-socketio-counter-example]()
+- See the complete code for a *real* **networked** version of the counter using `socketio`? Check out the [co-share-socketio-counter-example](https://github.com/cocoss-org/co-share-socketio-counter-example)
 - Motived to built a MMORPG / Multiplayer First Person Shooter / ... ? Well **go for it**! We recommend to use `co-share`, `co-share-socketio`, `react` and `react-three-fiber`.

@@ -3,6 +3,8 @@ import { retryWhen, delay, map, tap } from "rxjs/operators"
 import { clear, suspend } from "suspend-react"
 import { StoreFactory, Store, StoreLink, PathEntry, UnsubscribeAction, RootStore, rootStore } from ".."
 
+const useStoreSubscriptionSymbol = Symbol()
+
 export function useStoreSubscription<S extends Store>(
     path: PathEntry,
     retryAfter: number,
@@ -24,7 +26,7 @@ export function useStoreSubscription<S extends Store>(
                     }))
                 )
                 .toPromise(),
-        [retryAfter, path, providedRootStore, rootStoreLink, ...(factoryDepends ?? [])]
+        [retryAfter, path, providedRootStore, rootStoreLink, ...(factoryDepends ?? []), useStoreSubscriptionSymbol]
     )
 
     useLayoutEffect(() => {
@@ -35,7 +37,7 @@ export function useStoreSubscription<S extends Store>(
             if (ref.referenceCount === 0) {
                 UnsubscribeAction.publishTo([ref.storeLink])
                 providedRootStore.destroyStore(ref.store, path)
-                clear([retryAfter, path, providedRootStore, rootStoreLink, ...(factoryDepends ?? [])])
+                clear([retryAfter, path, providedRootStore, rootStoreLink, ...(factoryDepends ?? []), useStoreSubscriptionSymbol])
             }
         }
     }, [ref])

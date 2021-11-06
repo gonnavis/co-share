@@ -1,17 +1,16 @@
-import Image, { ImageLoader } from 'next/image'
+import Image, { ImageLoader } from "next/image"
 
-const loader: ImageLoader = ({ src,  }) => `/co-share${src}`
+const loader: ImageLoader = ({ src }) => `/co-share${src}`
 
 export function Footer() {
     return (
         <>
-            <div className="flex-grow-1" />
             <footer className="bg-light">
                 <div className="d-flex align-items-center justify-content-around p-3 container-lg">
                     <a
                         target="_blank"
                         href="https://github.com/cocoss-org/co-share"
-                        className="text-black d-flex flex-row align-items-center">
+                        className="mx-2 text-black d-flex flex-row align-items-center">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="16"
@@ -23,8 +22,8 @@ export function Footer() {
                         </svg>
                         <span className="h5 mb-0">Github</span>
                     </a>
-                    <a target="_blank" href="https://www.coconut-xr.com/">
-                        <Image loader={loader} width={212.5} height={50} src={"/powered-by.svg"} />
+                    <a className="d-flex mx-2" target="_blank" href="https://www.coconut-xr.com/">
+                        <Image loader={loader} layout="fixed" width={170} height={40} src={"/powered-by.svg"} />
                     </a>
                 </div>
             </footer>
