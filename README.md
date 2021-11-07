@@ -37,7 +37,7 @@ We will build a global synchronized counter that can be increased asynchronously
 
 ## [**Examples**](https://cocoss-org.github.io/co-share)
 
-*The code for each example, is provided under the sample*
+_The code for each example, is provided under the sample_
 
 -   [Request](https://cocoss-org.github.io/co-share/request) - request response paradigma
 <!-- * [Group Chat](https://cocoss-org.github.io/co-share/group-chat) - a whatsapp like chat implementation -->
@@ -46,8 +46,10 @@ We will build a global synchronized counter that can be increased asynchronously
 -   [Optimistic Lockable](https://cocoss-org.github.io/co-share/optimistic-lockable) - performance optimize lockable that allows for optimistic behaviour and error correction
 -   [Whiteboard](https://cocoss-org.github.io/co-share/whiteboard) - collaborative drawing on a shared whiteboard
 -   [Transformable](https://cocoss-org.github.io/co-share/transformable) - shared 3D transformation
+
 ---
-- [Networked Counter using SocketIO](https://github.com/cocoss-org/co-share-socketio-counter-example) - just like the counter from the tutorial but with a server/client architecture using SocketIO 
+
+-   [Networked Counter using SocketIO](https://github.com/cocoss-org/co-share-socketio-counter-example) - just like the counter from the tutorial but with a server/client architecture using SocketIO
 
 ## Example Architecture
 
@@ -64,6 +66,6 @@ Setting up a **StoreLink** can either be done manually or automatically by **sub
 
 ## Supporting Packages
 
--   **co-share-socketio** - networking implementation using [socketio](https://github.com/socketio/socket.io)
--   **co-share-peer** - p2p audio/video/data streaming/communication using [simple-peer](https://github.com/feross/simple-peer)
--   **co-share-geckosio** - _Idea_ - networking implementation using [geckosio](https://github.com/geckosio/geckos.io)
+-   [**co-share-socketio**](https://github.com/cocoss-org/co-share-socketio) - networking implementation using [socketio](https://github.com/socketio/socket.io)
+-   **co-share-peer** - _Comming Soon_ - p2p audio/video/data streaming/communication using [simple-peer](https://github.com/feross/simple-peer)
+<!---   **co-share-geckosio** - _Idea_ - networking implementation using [geckosio](https://github.com/geckosio/geckos.io)-->

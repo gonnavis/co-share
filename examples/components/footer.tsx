@@ -5,6 +5,7 @@ const loader: ImageLoader = ({ src }) => `/co-share${src}`
 export function Footer() {
     return (
         <>
+            <div className="flex-grow-1" />
             <footer className="bg-light">
                 <div className="d-flex align-items-center justify-content-around p-3 container-lg">
                     <a

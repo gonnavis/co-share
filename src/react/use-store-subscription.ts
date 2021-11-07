@@ -32,7 +32,6 @@ export function useStoreSubscription<S extends Store>(
     useLayoutEffect(() => {
         ref.referenceCount += 1
         return () => {
-            console.log("cleanup useStoreSubscription")
             ref.referenceCount -= 1
             if (ref.referenceCount === 0) {
                 UnsubscribeAction.publishTo([ref.storeLink])
