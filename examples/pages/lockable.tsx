@@ -11,7 +11,7 @@ import { Footer } from "../components/footer"
 export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
-            <Header selectedIndex={4} />
+            <Header selectedIndex={3} />
             <div className="d-flex flex-column justify-content-stretch container-lg">
                 <div className="d-flex flex-row-responsive">
                     <Simulator

@@ -11,7 +11,7 @@ import { Footer } from "../components/footer"
 export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
-            <Header selectedIndex={6} />
+            <Header selectedIndex={5} />
             <div className="d-flex flex-column justify-content-stretch container-lg">
                 <div className="d-flex flex-row-responsive">
                     <Simulator
@@ -105,7 +105,7 @@ export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }): 
 
     return (
         <canvas
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: "100%", height: "100%", touchAction: "none" }}
             ref={setCanvas}
             onPointerOut={onPointerUp}
             onPointerDown={onPointerDown}

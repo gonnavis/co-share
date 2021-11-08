@@ -83,7 +83,7 @@ export function TransformableExamplePage({ rootStore }: { rootStore: RootStore }
     const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
 
     return (
-        <Canvas>
+        <Canvas style={{ touchAction: "none" }}>
             <ambientLight />
             <pointLight position={[10, 10, 10]} />
             <Block store={store} id={id} />

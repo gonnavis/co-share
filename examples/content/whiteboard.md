@@ -117,7 +117,7 @@ export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }): 
 
     return (
         <canvas
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: "100%", height: "100%", touchAction: "none" }}
             ref={setCanvas}
             onPointerOut={onPointerUp}
             onPointerDown={onPointerDown}

@@ -1,4 +1,4 @@
-**for demonstration purposes the lock request has a delay of 1 second**
+**For demonstration purposes, the lock request has a delay of one second.**
 
 # Lockable Example Source Code
 

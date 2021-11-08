@@ -1,4 +1,5 @@
-**for demonstration purposes there is a 50% change of failing when requesting a calculation**
+**For demonstration purposes, there is a 50% chance of dropping the request for the calculation.**
+**If a request fails, the system will try to send another request after a one second delay.**
 
 # Request Example Source Code
 

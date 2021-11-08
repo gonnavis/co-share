@@ -15,6 +15,7 @@ export function useStoreSubscription<S extends Store>(
 ): S {
     const ref = suspend(
         () =>
+            //this process should be canceled (wait for react to incorporate that feature)
             providedRootStore
                 .subscribe<S>(path, rootStoreLink, storeFactory)
                 .pipe(

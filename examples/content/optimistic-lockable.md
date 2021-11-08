@@ -1,5 +1,5 @@
-**for demonstration purposes there is a 50% change of failing when requesting a lock**
-**however, as soon as it failes a new request will be send**
+**For demonstration purposes, there is a 50% chance of failing when requesting a lock.**
+**However, as soon as it fails, a new request will be sent.**
 
 # Optimistic Lockable Example Source Code
 

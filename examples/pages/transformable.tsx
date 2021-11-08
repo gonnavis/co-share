@@ -13,7 +13,7 @@ import { Footer } from "../components/footer"
 export default function Index(): JSX.Element {
     return (
         <div className="d-flex flex-column fullscreen">
-            <Header selectedIndex={7} />
+            <Header selectedIndex={6} />
             <div className="d-flex flex-column justify-content-stretch container-lg">
                 <div className="d-flex flex-row-responsive">
                     <Simulator
@@ -72,7 +72,7 @@ export function TransformableExamplePage({ rootStore }: { rootStore: RootStore }
     const id = useMemo(() => rootStore.mainLink.connection.userData.id, [rootStore])
 
     return (
-        <Canvas>
+        <Canvas style={{ touchAction: "none" }}>
             <ambientLight />
             <pointLight position={[10, 10, 10]} />
             <Block store={store} id={id} />

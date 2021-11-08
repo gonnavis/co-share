@@ -1,24 +1,24 @@
 # co-share
 
-A Javascript framework for easily building shared applications such as chats and games.
+Javascript framework for easily building shared applications such as chats and games
 
 `npm i co-share`
 
 ## **When to use**
 
 Building **multiuser applications for the web** is often challenging as asynchronous communication can drastically increase the system complexity.
-Writing **robust and performant shared applications** requires a structured and fitting architecure.
+Writing **robust and performant shared applications** requires a structured and fitting architecture.
 
-We propose the abstraction of **shared stores** to distribute logic and data between participating system.
-By using Javascript & Node.js the same code can be used on the client and on the server to carry out the **platform indepedent communication**.
+We propose the abstraction of **shared stores** to distribute logic and data between participating systems.
+By using Javascript & Node.js, the same code can be used on the client and the server to carry out the **platform-independent communication**.
 
 ## [**Tutorial**](https://cocoss-org.github.io/co-share/counter)
 
-We will build a global synchronized counter that can be increased asynchronously by every client.
+We will build a global synchronized counter that can be increased by every client.
 
 ## [**Examples**](https://cocoss-org.github.io/co-share)
 
-_The code for each example, is provided under the sample_
+_The code for each example can be found on the respective pages_
 
 -   [Request](https://cocoss-org.github.io/co-share/request) - request response paradigma
 <!-- * [Group Chat](https://cocoss-org.github.io/co-share/group-chat) - a whatsapp like chat implementation -->
