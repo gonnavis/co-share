@@ -1,5 +1,10 @@
 # co-share
 
+[![Build Status](https://img.shields.io/github/workflow/status/cocoss-org/co-share/Depolyment)](https://github.com/cocoss-org/co-share/actions)&nbsp;
+[![Npm package version](https://badgen.net/npm/v/co-share)](https://npmjs.com/package/co-share)&nbsp;
+[![GitHub license](https://img.shields.io/github/license/cocoss-org/co-share.svg)](https://github.com/cocoss-org/co-share/blob/master/LICENSE)&nbsp;
+[![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/BelaBohlender)
+
 Javascript framework for easily building shared applications such as chats and games
 
 `npm i co-share`
