@@ -19,11 +19,18 @@ By using Javascript & Node.js, the same code can be used on the client and the s
 
 ## [**Tutorial**](https://cocoss-org.github.io/co-share/counter)
 
-We will build a global synchronized counter that can be increased by every client.
+
+We will build a globally synchronized counter and display it using `react`. Every client can increase the counter.
+
+![Counter Example](counter-example.gif)
+
+Above, you can see a local simulation with the clients "Alice" and "Bob". Even though we can simulate the communication locally, this library is meant for **networked communication** using WebSocket or WebRTC.
 
 ## [**Examples**](https://cocoss-org.github.io/co-share)
 
 _The code for each example can be found on the respective pages_
+
+### Simulated locally in your browser
 
 -   [Request](https://cocoss-org.github.io/co-share/request) - request response paradigma
 <!-- * [Group Chat](https://cocoss-org.github.io/co-share/group-chat) - a whatsapp like chat implementation -->
@@ -33,6 +40,6 @@ _The code for each example can be found on the respective pages_
 -   [Whiteboard](https://cocoss-org.github.io/co-share/whiteboard) - collaborative drawing on a shared whiteboard
 -   [Transformable](https://cocoss-org.github.io/co-share/transformable) - shared 3D transformation
 
----
+### An extra Project with a server/client architecture using SocketIO
 
 -   [Networked Counter using SocketIO](https://github.com/cocoss-org/co-share-socketio-counter-example) - just like the counter from the tutorial but with a server/client architecture using SocketIO

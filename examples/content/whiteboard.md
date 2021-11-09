@@ -1,5 +1,8 @@
-# Whiteboard Example Source Code
+# Whiteboard Example
 
+Draw collaboratively on a shared whiteboard.
+
+# Source Code
 
 [`whiteboard.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/whiteboard.ts)
 
@@ -91,7 +94,6 @@ export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }): 
 
     const lastPointerPosition = useRef<{ x: number; y: number }>()
 
-    //TODO: fix mobile dragging (e.g. w. useGesture)
     const onPointerMove = useCallback(
         (event: PointerEvent) => {
             if (lastPointerPosition.current != null) {

@@ -1,4 +1,8 @@
-# Transformable Example Source Code
+# Transformable Example
+
+Transform a 3D cube collaboratively and prevent simultaneous transformation by multiple clients using lock functionality.
+
+# Source Code
 
 [`transformable.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/transformable.ts)
 
@@ -112,7 +116,6 @@ export function Block({ store, id }: { store: TransformableStore; id: string }):
         }
     })
 
-    //TODO: fix mobile dragging (e.g. w. useGesture)
     useEffect(() => {
         const onPointerUp = () => {
             if (id == ownerRef.current) {

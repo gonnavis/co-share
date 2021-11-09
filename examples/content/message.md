@@ -1,4 +1,9 @@
-# Message Example Source Code
+# Message Example
+
+Write messages directly from client to client without any persistent storage in between.  
+We use a `send-message` **Action**, which the server re-routs to the target client. 
+
+# Source Code
 
 [`message.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/message.ts)
 

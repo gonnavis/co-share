@@ -1,5 +1,12 @@
+# Optimistic Lockable
+
+*The Lock is requested as soon as the user tries to modify the slider.*
+
+Similar to the Lockable Example, we establish a Lock that only one client can obtain. However, the optimistic lock expects approval from the approver and grants the lock to the client before receiving approval. If the approver denies the request, all subsequent changes are revealed. Thus, the optimistic lockable optimizes the performance and allows for optimistic behavior and error correction.
+
 **For demonstration purposes, there is a 50% chance of failing when requesting a lock.**
-**However, as soon as it fails, a new request will be sent.**
+**However, as soon as one request fails, a new request will be sent.**
+**Therefore, the experience is seamless.**
 
 # Optimistic Lockable Example Source Code
 

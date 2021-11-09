@@ -101,7 +101,6 @@ export function Block({ store, id }: { store: TransformableStore; id: string }):
         }
     })
 
-    //TODO: fix mobile dragging (e.g. w. useGesture)
     useEffect(() => {
         const onPointerUp = () => {
             if (id == ownerRef.current) {

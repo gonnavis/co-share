@@ -1,12 +1,10 @@
 import { Connection, ConnectionMessage, RootStore, RootStoreDefaultLinkId, Store, StoreMap } from "co-share"
 import { Subject } from "rxjs"
-import { v4 as uuid } from "uuid"
 
 export class ServerStub {
     constructor(private readonly rootStore: RootStore, private readonly log: boolean) {}
 
-    createConnection(): Promise<Connection> {
-        const id = uuid()
+    createConnection(id: string): Promise<Connection> {
         const clientToServerSubject = new Subject<ConnectionMessage>()
         const serverToClientSubject = new Subject<ConnectionMessage>()
         if (this.log) {

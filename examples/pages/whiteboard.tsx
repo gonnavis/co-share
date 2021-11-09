@@ -79,7 +79,6 @@ export function WhiteboardExamplePage({ rootStore }: { rootStore: RootStore }): 
 
     const lastPointerPosition = useRef<{ x: number; y: number }>()
 
-    //TODO: fix mobile dragging (e.g. w. useGesture)
     const onPointerMove = useCallback(
         (event: PointerEvent) => {
             if (lastPointerPosition.current != null) {

@@ -1,6 +1,13 @@
+# Lockable Example
+
+When building applications for concurrent usage, it is sometimes essential to prevent simultaneous editing of a single resource,
+In this example, locking functionality is implemented to give only one user the ability to change to lock. 
+
 **For demonstration purposes, the lock request has a delay of one second.**
 
-# Lockable Example Source Code
+In an actual application, the user does not want to wait for approval. The [**Optimistic Lockable**](https://cocoss-org.github.io/co-share/optimistic-lockable) Example shows how to improve this scenario.
+
+# Source Code
 
 [`lockable.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/lockable.ts)
 

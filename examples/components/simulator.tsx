@@ -2,6 +2,8 @@ import { Suspense, useEffect, useMemo, useState } from "react"
 import { Connection, createRootStore, RootStore, RootStoreDefaultLinkId } from "co-share"
 import { ServerStub } from "../server-stub"
 
+const names = ["Alice", "Bob"]
+
 export function Simulator({
     children,
     initStores,
@@ -19,7 +21,7 @@ export function Simulator({
         const rootStore = createRootStore()
         initStores(rootStore)
         const serverStub = new ServerStub(rootStore, log ?? false)
-        Promise.all(new Array(twoClients ? 2 : 1).fill(null).map(() => serverStub.createConnection())).then(
+        Promise.all(new Array(twoClients ? 2 : 1).fill(null).map((_, i) => serverStub.createConnection(names[i]))).then(
             setConnections
         )
     }, [log, setConnections, initStores, twoClients])
@@ -34,7 +36,7 @@ export function Simulator({
                 <div
                     className="d-flex flex-column flex-grow-1 flex-basis-0 m-3 flex-shrink-1"
                     key={connection.userData.id}>
-                    <h6>Client {connection.userData.id}</h6>
+                    <h6>{connection.userData.id}</h6>
                     <div key={connection.userData.id} className="flex-grow-1 flex-basis-0 border border-2 rounded-3">
                         <View connection={connection} children={children} />
                     </div>

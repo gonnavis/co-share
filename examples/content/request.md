@@ -1,7 +1,11 @@
+# Request Example
+
+You can request the addition of "Variable 1" and "Variable 2". The library supports the request and response paradigm and uses it internally for subscribing to a **Store**.
+
 **For demonstration purposes, there is a 50% chance of dropping the request for the calculation.**
 **If a request fails, the system will try to send another request after a one second delay.**
 
-# Request Example Source Code
+# Source Code
 
 [`request.ts`](https://github.com/cocoss-org/co-share/blob/master/examples/stores/request.ts)
 

@@ -218,9 +218,20 @@ function CounterExamplePage() {
 }
 ```
 
-## Next Step
+## What's Next?
 
-- That was easy. Can you show me something more complex? Check out the other **Examples**. We always provide the code below. They increase in complexity.
-- Have something to complain about or correct? **write an issue or a PR**
-- See the complete code for a *real* **networked** version of the counter using `socketio`? Check out the [co-share-socketio-counter-example](https://github.com/cocoss-org/co-share-socketio-counter-example)
-- Motived to build an MMORPG / Multiplayer First Person Shooter / ... ? Well **go for it**! We recommend to use `co-share`, `co-share-socketio`, `react` and `react-three-fiber`.
+> That was easy. Can you show me something **more complex**?
+
+Check out the other [**Examples**](https://cocoss-org.github.io/co-share). They increase in complexity.
+
+> Have something to **complain** about or correct?
+
+**write an issue or a PR**
+
+> Want to see the complete code for a *real* **networked** version of the counter using `socketio`?
+
+Check out the [co-share-socketio-counter-example](https://github.com/cocoss-org/co-share-socketio-counter-example)
+
+> Motivated to build an MMORPG / Multiplayer First Person Shooter / ... ?
+
+Well, **go for it**! We recommend to use `co-share`, `co-share-socketio`, `react` and `react-three-fiber`.
