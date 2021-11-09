@@ -2,7 +2,6 @@ graph Website {
     node [fontname=Arial]
     edge [fontname=Arial]
     rankdir="LR"
-    bgcolor=transparent
 
     subgraph cluster_server {
         label = "Server";

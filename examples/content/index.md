@@ -7,6 +7,11 @@
 
 Javascript framework for easily building shared applications such as chats and games
 
+![Transformable Example](transformable-example.gif)
+
+*A shared 3D Cube with "Alice" and "Bob" as **simulated** users.  
+The [Example](https://cocoss-org.github.io/co-share/transformable/) was built with `co-share` and [react-three-fiber](https://github.com/pmndrs/react-three-fiber)*
+
 `npm i co-share`
 
 ## **When to use**
