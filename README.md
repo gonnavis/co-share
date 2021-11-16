@@ -5,7 +5,7 @@
 [![GitHub license](https://img.shields.io/github/license/cocoss-org/co-share.svg)](https://github.com/cocoss-org/co-share/blob/master/LICENSE)&nbsp;
 [![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/BelaBohlender)
 
-Javascript framework for easily building shared applications such as chats and games
+Javascript library for easily building shared applications such as chats and games
 
 ![Transformable Example](transformable-example.gif)
 
